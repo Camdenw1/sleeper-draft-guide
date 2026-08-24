@@ -24,9 +24,15 @@ refreshes never clobber UI work, and UI work never has to touch the pipeline.
 3. `board.py` (which execs `blend.py`) → VOR against endogenous replacement level,
    blends model with public consensus, applies the market layer, assigns tiers and tags
 
-Data modules: `players.py` (projections + availability), `hp_data.py` (Sleeper/ESPN
-ADP + green/red flags), `ranks.py` (FantasyPros ECR + tiers, Flock), `market.py`
-(win totals, props, award odds).
+Data modules: `players.py` (projections + availability), `hp_data.py` (player pool
++ hand-written green/red flags), `sources.py` (fetches four free public ranking
+sources live: FFC half-PPR ADP, ESPN, Sleeper, Yahoo — cached 6h, falls back to
+cache on failure), `ranks.py` (normalizes those into joinable columns),
+`market.py` (win totals, props, award odds).
+
+The paid sources this project started with — FantasyPros ECR and a Flock Fantasy
+export — were removed when the repo went public. Don't reintroduce paid or
+paywalled rankings; `sources.py` is the place to add a new free one.
 
 ## League rules — don't change these without being asked
 

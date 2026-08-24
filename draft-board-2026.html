@@ -64,7 +64,7 @@ padding:4px 5px;border-radius:2px;color:#0D1418}
 .spread .axis{position:absolute;top:9px;left:0;right:0;height:1px;background:var(--line2)}
 .spread .mid{position:absolute;top:4px;left:50%;width:1px;height:11px;background:var(--dim)}
 .spread b{position:absolute;top:6px;width:6px;height:6px;border-radius:50%;transform:translateX(-3px);opacity:.9}
-.d-sl{background:var(--good)}.d-es{background:var(--bad)}.d-fp{background:var(--warn)}.d-fk{background:var(--info)}
+.d-ffc{background:var(--good)}.d-espn{background:var(--bad)}.d-slp{background:var(--warn)}.d-yh{background:var(--info)}
 .spnum{display:block;font-size:9.5px;color:var(--dimmer);text-align:center;letter-spacing:.06em}
 .fit{width:74px}
 .fitbar{position:relative;width:64px;height:7px;background:var(--line);margin:3px auto 0;border-radius:1px}
@@ -118,7 +118,7 @@ thead th{border-bottom:1px solid var(--line2)}
 
 <header>
 <div class="kicker">12 teams · QB/2RB/2WR/TE/W-R-T/W-T/K/DST · half PPR · 0.75 per TE catch · 100 &amp; 200 yard bonuses</div>
-<h1>Projections, four expert boards, and <em>where the money went</em>.</h1>
+<h1>Projections, four public boards, and <em>where the money went</em>.</h1>
 <p class="sub">Blended from a projection model rescored for your exact scoring, four public
 ranking systems, and the betting market. <button id="info" class="ibtn" aria-expanded="false"
 aria-controls="infopanel">How this works</button></p>
@@ -132,14 +132,15 @@ your 12-team roster — QB, 2RB, 2WR, TE, RB/WR/TE flex, WR/TE flex, K, DST — 
 scarcity-adjusted rather than raw points.</p>
 <h3>Why it isn't pure model</h3>
 <p>Every projection comes from a single source. Where that source is stingy, a pure model rank
-fought all four expert boards on one house's opinion. So each player's average public rank is
+fought all four public boards on one house's opinion. So each player's average public rank is
 converted back into points using the model's own value curve, and the two are averaged. The
 <b>Model</b> column shows the unblended view; the distance between it and the rank is how far the
 crowd pulled him.</p>
 <h3>The four systems</h3>
-<p>Sleeper and ESPN are ADP converted to a forced integer rank. FantasyPros is their <b>expert
-consensus (ECR)</b>, not their ADP — which is why Chase sits third rather than first — with their
-published tier in grey underneath. Flock is their published redraft order. Every system gives every
+<p>All four are free public sources, pulled live at build time. <b>FFC</b> is Fantasy Football
+Calculator's real half-PPR 12-team ADP from thousands of public mock drafts — the only source whose
+format matches this league exactly, which is why it anchors the blend. ESPN and Yahoo are their
+public draft boards; Sleeper is its draft-room ordering. Every system gives every
 player exactly one slot, so the spread plot is directly comparable across all four.</p>
 <h3>Market column</h3>
 <p>Free season-long props existed for only about 30 players. Where one exists, the score compares
@@ -176,10 +177,10 @@ source's opinions; where you disagree, override it.</p>
 <th class="l" data-s="p">Player &amp; flags<span class="ar"></span></th>
 <th class="l" data-s="pos">Pos<span class="ar"></span></th>
 <th class="hide-s" data-s="bye">Bye<span class="ar"></span></th>
-<th class="grp" data-s="sl">Sleeper<span class="ar"></span></th>
-<th class="grp" data-s="es">ESPN<span class="ar"></span></th>
-<th class="grp" data-s="fpr">FPros<span class="ar"></span></th>
-<th class="grp" data-s="fkr">Flock<span class="ar"></span></th>
+<th class="grp" data-s="ffcr">FFC<span class="ar"></span></th>
+<th class="grp" data-s="espnr">ESPN<span class="ar"></span></th>
+<th class="grp" data-s="sleeperr">Sleeper<span class="ar"></span></th>
+<th class="grp" data-s="yahoor">Yahoo<span class="ar"></span></th>
 <th data-s="avg">Avg<span class="ar"></span></th>
 <th class="hide-m" data-s="spread">Where they land<span class="ar"></span></th>
 <th class="hide-s" data-s="model">Model<span class="ar"></span></th>
@@ -188,9 +189,9 @@ source's opinions; where you disagree, override it.</p>
 <th data-s="fit">Scoring fit<span class="ar"></span></th>
 </tr></thead><tbody id="rows"></tbody></table>
 <p class="hint">
-Sleeper / ESPN / FPros / Flock = each system's rank, forced to one slot per player. FPros is expert
-consensus with their tier in grey underneath. Avg = mean of the four (NR excluded).
-Where they land = each system plotted against their average, window &plusmn;40 slots<span class="key d-sl"></span>Sleeper<span class="key d-es"></span>ESPN<span class="key d-fp"></span>FPros<span class="key d-fk"></span>Flock. A wide plot means nobody agrees, which is where the value hides.<br>
+FFC / ESPN / Sleeper / Yahoo = each public system's rank, densely re-ranked to one slot per player.
+FFC is real half-PPR 12-team ADP. Avg = mean of the four (NR excluded).
+Where they land = each system plotted against their average, window &plusmn;40 slots<span class="key d-ffc"></span>FFC<span class="key d-espn"></span>ESPN<span class="key d-slp"></span>Sleeper<span class="key d-yh"></span>Yahoo. A wide plot means nobody agrees, which is where the value hides.<br>
 Model = where the projection model alone puts him; the difference between Model and the blended rank
 shows how far the crowd pulled him. Gap = average public rank minus the blended rank; positive means
 the room should let him fall to you.<br>
@@ -226,10 +227,10 @@ const i0=v=>v==null?"—":Math.round(v);
 const n1=v=>v==null?"—":(Math.round(v*10)/10).toFixed(1);
 function dots(x){const W=40,c=x.avg,pos=v=>Math.max(2,Math.min(98,50+((v-c)/W)*50));
 let h=`<div class="spread"><div class="axis"></div><div class="mid"></div>`;
-if(x.sl!=null)h+=`<b class="d-sl" style="left:${pos(x.sl)}%"></b>`;
-if(x.es!=null)h+=`<b class="d-es" style="left:${pos(x.es)}%"></b>`;
-if(x.fpr!=null)h+=`<b class="d-fp" style="left:${pos(x.fpr)}%"></b>`;
-if(x.fkr!=null)h+=`<b class="d-fk" style="left:${pos(x.fkr)}%"></b>`;
+if(x.ffcr!=null)h+=`<b class="d-ffc" style="left:${pos(x.ffcr)}%"></b>`;
+if(x.espnr!=null)h+=`<b class="d-espn" style="left:${pos(x.espnr)}%"></b>`;
+if(x.sleeperr!=null)h+=`<b class="d-slp" style="left:${pos(x.sleeperr)}%"></b>`;
+if(x.yahoor!=null)h+=`<b class="d-yh" style="left:${pos(x.yahoor)}%"></b>`;
 return h+`</div><span class="spnum">${x.spread?("\u00b1"+x.spread):"tight"}</span>`;}
 function mktCell(x){
  if(x.mkt==null)return `<span class="flat">—</span>`;
@@ -281,10 +282,10 @@ function render(){
    <td class="l"><span class="pill ${x.pos}">${x.pos}</span>
     <span class="ptier">${x.ptier?(x.pos+" t"+x.ptier):"&nbsp;"}</span></td>
    <td class="hide-s flat">${x.bye||"—"}</td>
-   <td class="site">${i0(x.sl)}</td>
-   <td class="site">${x.es==null?'<span class="flat">NR</span>':i0(x.es)}</td>
-   <td class="site">${x.fpr==null?'<span class="flat">NR</span>':i0(x.fpr)}${x.fpt?`<span class="ptier">FP t${x.fpt}</span>`:""}</td>
-   <td class="site">${x.fkr==null?'<span class="flat">NR</span>':i0(x.fkr)}</td>
+   <td class="site">${x.ffcr==null?'<span class="flat">NR</span>':i0(x.ffcr)}</td>
+   <td class="site">${x.espnr==null?'<span class="flat">NR</span>':i0(x.espnr)}</td>
+   <td class="site">${x.sleeperr==null?'<span class="flat">NR</span>':i0(x.sleeperr)}</td>
+   <td class="site">${x.yahoor==null?'<span class="flat">NR</span>':i0(x.yahoor)}</td>
    <td class="avg">${n1(x.avg)}</td>
    <td class="hide-m">${dots(x)}</td>
    <td class="hide-s flat">${x.model==null?"—":x.model}</td>

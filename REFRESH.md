@@ -21,16 +21,22 @@ that file is hand-tuned presentation and the whole architecture exists to protec
   suspensions, depth-chart changes. Delete anyone out for the year.
 - Source used originally: FFToday consensus projections.
 
-**`refresh/hp_data.py`** — Sleeper ADP, ESPN ADP, and the green/red flags
-- Update the `sl` and `es` numbers (raw ADP; the build converts them to ranks).
+**`refresh/hp_data.py`** — the player pool and the green/red flags
+- The `sl`/`es`/`fpros`/`cons` numeric columns are **no longer read** by the build;
+  rankings are fetched live now. The columns that still matter are the player list
+  itself (name, team, pos) and the two flag strings.
 - Rewrite any flag that has gone stale. A red flag saying "groin injury, missing
   preseason" is wrong once he's playing. This is the part that decays fastest and
   the part most worth your attention.
 
-**`refresh/ranks.py`** — FantasyPros ECR and Flock
-- Both need Camden to paste fresh exports; neither can be scraped (FantasyPros
-  renders in JS, Flock blocks robots). **If he hasn't pasted new ones, leave them
-  alone and say so in the report** rather than guessing.
+**`refresh/sources.py`** — the four public ranking feeds
+- Nothing to paste. FFC, ESPN, Sleeper and Yahoo are fetched at build time.
+- Cached six hours in `pubranks_cache.json`; force a pull with
+  `python3 refresh/sources.py --refresh`.
+- If a source fails it falls back to cache and says so in the build output. **If a
+  source printed FETCH FAILED, say so in the report** — a stale column silently
+  dragging the average is exactly the kind of thing to surface, not bury.
+- Don't add paid or paywalled rankings here. The repo is public.
 
 **`refresh/market.py`** — betting layer
 - `WIN`: team win totals, all 32.

@@ -22,13 +22,14 @@ stamp = datetime.date.today().strftime("%d %B %Y").lstrip("0")
 N = lambda v: "NR" if v is None else v
 with open(ROOT / "rankings.csv", "w", newline="") as f:
     w = csv.writer(f)
-    w.writerow(["Rank","OverallTier","Pos","PosTier","Player","Team","Bye","Tag","Sleeper","ESPN",
-      "FantasyProsECR","FProsTier","Flock","AvgPublic","Spread","ModelRank","Gap","Market",
-      "PropLine","ProjVsLinePct","TeamWinTotal","AwardOdds","ScoringFit","LeaguePts","YardBonusPts",
-      "GreenFlag","RedFlag"])
+    w.writerow(["Rank","OverallTier","Pos","PosTier","Player","Team","Bye","Tag",
+      "FFCHalfPPR","ESPN","Sleeper","Yahoo","NumSources","AvgPublic","Spread",
+      "ModelRank","Gap","Market","PropLine","ProjVsLinePct","TeamWinTotal","AwardOdds",
+      "ScoringFit","LeaguePts","YardBonusPts","GreenFlag","RedFlag"])
     for x in rows:
         w.writerow([x["rk"],x["otier"],x["pos"],x["ptier"],x["p"],x["tm"],x["bye"],x["tag2"],
-          N(x["sl"]),N(x["es"]),N(x["fpr"]),N(x["fpt"]),N(x["fkr"]),x["avg"],x["spread"],
+          N(x["ffcr"]),N(x["espnr"]),N(x["sleeperr"]),N(x["yahoor"]),x["nsrc"],
+          x["avg"],x["spread"],
           N(x["model"]),x["gap"],x["mkt"],N(x["prop"]),N(x["propdelta"]),x["win"],x["mktnote"],
           N(x["fit"]),round(x["tot"],1) if x["tot"] else "",x["bonus"],x["g"],x["r"]])
 

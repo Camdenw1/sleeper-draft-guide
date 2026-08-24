@@ -16,18 +16,15 @@ for (n,tm,pos,sl,es,fpadp,cons,g,r) in D.ROWS:
     b=BASE.get(k); q=BONUS.get(k,0.0)
     rc=RECS.get(k,0)
     ydb = q - (0.25*rc if pos=="TE" else 0.0)     # strip the double-counted TE premium
-    rows.append(dict(p=n,tm=tm,pos=pos,slADP=sl,esADP=es,bye=BYE.get(tm,0),
+    rows.append(dict(p=n,tm=tm,pos=pos,bye=BYE.get(tm,0),
         base=b,bonus=round(ydb,1),quirk=round(q,1),
         tot=(b+ydb) if b is not None else None,av=AV.get(k,1.0),
-        fk=R.FLOCK_N.get(nn), fp=R.FP_N.get(nn), fpt=R.FPT_N.get(nn)))
+        ffc=R.FFC_N.get(nn), espn=R.ESPN_N.get(nn),
+        sleeper=R.SLEEPER_N.get(nn), yahoo=R.YAHOO_N.get(nn)))
 
-# Sleeper / ESPN ADP -> forced integer rank
-for key,src in [("sl","slADP"),("es","esADP")]:
-    have=sorted([x for x in rows if x[src] is not None], key=lambda z:z[src])
-    for i,x in enumerate(have): x[key]=i+1
-    for x in rows: x.setdefault(key,None)
-# Flock / FP: re-rank densely within the pool so all four columns are comparable
-for key in ("fk","fp"):
+# All four public sources -> dense integer rank within this pool, so the columns
+# are comparable (FFC/Yahoo are ADP in picks, ESPN/Sleeper are board ranks).
+for key in ("ffc","espn","sleeper","yahoo"):
     have=sorted([x for x in rows if x[key] is not None], key=lambda z:z[key])
     for i,x in enumerate(have): x[key+"r"]=i+1
     for x in rows: x.setdefault(key+"r",None)
@@ -61,8 +58,11 @@ for x in rows:
     x["fit"]=int(round(float(np.clip(f,-10,10))))
 
 for x in rows:
-    v=[y for y in (x["sl"],x["es"],x["fpr"],x["fkr"]) if y is not None]
-    x["avg"]=round(sum(v)/len(v),1); x["spread"]=max(v)-min(v) if len(v)>1 else 0
+    v=[y for y in (x["ffcr"],x["espnr"],x["sleeperr"],x["yahoor"]) if y is not None]
+    x["nsrc"]=len(v)
+    # Sleeper covers the whole pool, so v is never empty; guard anyway.
+    x["avg"]=round(sum(v)/len(v),1) if v else float(len(rows))
+    x["spread"]=max(v)-min(v) if len(v)>1 else 0
 # Translate each player's average public rank into points-above-replacement by
 # reading off the model's own value curve at that slot -> a "market value".
 curve=sorted([x["vor"] for x in rows if x["vor"] is not None], reverse=True)
@@ -92,12 +92,12 @@ for pos in ("QB","RB","WR","TE"):
     for x,t in tier([y for y in rows if y["pos"]==pos],10,7): x["ptier"]=t
 json.dump(rows,open("blend_out.json","w"))
 print("replacement:",{k:round(v) for k,v in REPL.items()})
-print("\nRK T  POS   PLAYER                 SL  ES  FP(t) FLK  AVG  GAP FIT")
+print("\nRK T  POS   PLAYER                FFC ESPN  SLP  YH  AVG  GAP FIT")
 for x in rows[:26]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']:<3} {x['p']:22} "
-          f"{str(x['sl']):>3} {str(x['es']):>3} {str(x['fpr']):>3}({x['fpt']}) {str(x['fkr']):>3} "
-          f"{x['avg']:5} {x['gap']:+4} {x['fit']:+3}")
+          f"{str(x['ffcr']):>3} {str(x['espnr']):>4} {str(x['sleeperr']):>4} "
+          f"{str(x['yahoor']):>3} {x['avg']:5} {x['gap']:+4} {x['fit']:+3}")
 print("\nBIGGEST FOUR-SYSTEM DISAGREEMENTS")
 for x in sorted(rows,key=lambda z:-z["spread"])[:12]:
-    print(f"  {x['p']:22} SL {str(x['sl']):>3} ES {str(x['es']):>3} FP {str(x['fpr']):>3} "
-          f"FLK {str(x['fkr']):>3}  spread {x['spread']}")
+    print(f"  {x['p']:22} FFC {str(x['ffcr']):>3} ESPN {str(x['espnr']):>3} "
+          f"SLP {str(x['sleeperr']):>3} YH {str(x['yahoor']):>3}  spread {x['spread']}")
