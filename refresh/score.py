@@ -1,9 +1,30 @@
-"""Rescore season projections under this league: half PPR, 0.75/catch TE."""
-import players as P, json
+"""Rescore season projections under this league's actual scoring.
 
-def base(passYd=0,passTD=0,ints=0,ruYd=0,ruTD=0,rec=0,reYd=0,reTD=0,ppr=0.5):
-    return (0.04*passYd + 4*passTD - 1*ints + 0.1*ruYd + 6*ruTD
-            + 0.1*reYd + 6*reTD + ppr*rec)
+Half PPR, 0.75/catch for TE (0.5 baseline + 0.25 premium), interceptions at -2.
+
+Two positions need more than a multiply-and-sum:
+
+  K    FG points depend on DISTANCE (1-6 by bucket) plus 0.10 per yard, so a
+       45-yarder is worth 8.5. Each kick is independent and we only need the
+       season total, so the expectation is exact -- no simulation required.
+  DST  Points-allowed scoring is a per-GAME step function (0 -> +10, 35+ -> -4).
+       E[tier(PA)] != tier(E[PA]), the same reason fit.py exists, so the PA
+       component is simulated per game rather than read off the season average.
+
+Per-game yardage bonuses live in fit.py.
+"""
+import json
+import numpy as np
+import players as P
+
+RNG = np.random.default_rng(20260823)
+N = 40000
+
+
+def base(passYd=0, passTD=0, ints=0, ruYd=0, ruTD=0, rec=0, reYd=0, reTD=0, ppr=0.5):
+    return (0.04 * passYd + 4 * passTD - 2 * ints + 0.1 * ruYd + 6 * ruTD
+            + 0.1 * reYd + 6 * reTD + ppr * rec)
+
 
 QBINT = {"Josh Allen":9,"Drake Maye":9,"Lamar Jackson":8,"Jayden Daniels":11,"Jalen Hurts":7,
  "Bo Nix":12,"Joe Burrow":10,"Brock Purdy":13,"Caleb Williams":8,"Dak Prescott":10,
@@ -13,15 +34,48 @@ QBINT = {"Josh Allen":9,"Drake Maye":9,"Lamar Jackson":8,"Jayden Daniels":11,"Ja
  "C.J. Stroud":10,"Geno Smith":14,"Cam Ward":11,"Aaron Rodgers":8,"Jacoby Brissett":10,
  "Fernando Mendoza":10}
 
-pts={}
+# ------------------------------------------------------------------ kicker ---
+# Made-FG distance mix for a league-average leg, and the points each bucket pays
+# under this league (bucket value + 0.10/yard at the bucket's midpoint).
+FG_MID = np.array([17., 25., 35., 45., 55., 62.])
+FG_BUCKET = np.array([1., 2., 3., 4., 5., 6.])
+FG_BASE_P = np.array([.02, .22, .27, .27, .19, .03])
+FG_VALUE = FG_BUCKET + 0.10 * FG_MID          # -> [2.7, 4.5, 6.5, 8.5, 10.5, 12.2]
+
+
+def fg_ev(leg):
+    """Expected points per made FG, tilting the distance mix by leg strength."""
+    z = np.arange(6) - 2.5
+    w = FG_BASE_P * np.exp(0.45 * (leg - 1.0) * z / 2.5)
+    w = w / w.sum()
+    return float((w * FG_VALUE).sum())
+
+
+# ------------------------------------------------------------------- defense ---
+def pa_points(pa_season):
+    """Simulate per-game points allowed and average the tier payout."""
+    mu = pa_season / 17.0
+    pa_g = 7 * RNG.poisson(mu / 9.5, N) + 3 * RNG.poisson(mu / 11.4, N)
+    pts = np.select(
+        [pa_g == 0, pa_g <= 6, pa_g <= 13, pa_g <= 20, pa_g <= 27, pa_g <= 34],
+        [10.0,      7.0,       4.0,        1.0,        0.0,        -1.0],
+        default=-4.0)
+    return float(pts.mean()) * 17
+
+
+pts = {}
 for n,tm,a,py,ptd,ry,rtd,av in P.QB: pts[n]=base(py,ptd,QBINT.get(n,10),ry,rtd)*av
 for n,tm,a,ra,ry,rtd,rc,red,retd,av in P.RB: pts[n]=base(ruYd=ry,ruTD=rtd,rec=rc,reYd=red,reTD=retd)*av
 for n,tm,a,rc,red,retd,ra,ry,rtd,av in P.WR: pts[n]=base(ruYd=ry,ruTD=rtd,rec=rc,reYd=red,reTD=retd)*av
 for n,tm,a,rc,red,retd,av in P.TE: pts[n]=base(rec=rc,reYd=red,reTD=retd,ppr=0.75)*av   # TE premium
-for n,tm,a,fgm,fga,xpm,leg in P.K: pts[n]=3*fgm+xpm
+
+for n,tm,a,fgm,fga,xpm,leg in P.K:
+    pts[n] = fgm * fg_ev(leg) + xpm - (fga - fgm)      # FG missed is -1
+
 for n,tm,a,sk,fr,it,dtd,pa,saf,ktd in P.DST:
-    papg=pa/17
-    pab=10 if papg<11 else 7 if papg<14 else 4 if papg<18 else 1 if papg<22 else 0 if papg<28 else -3
-    pts[f"{tm} {n}"]=sk+2*it+2*fr+6*(dtd+ktd)+2*saf+pab*17
-json.dump(pts,open("halfppr_pts.json","w"))
+    pts[f"{tm} {n}"] = sk + 2*it + 2*fr + 6*(dtd+ktd) + 2*saf + pa_points(pa)
+
+json.dump(pts, open("halfppr_pts.json", "w"))
 print(f"scored {len(pts)} players")
+ks = sorted([(v, k) for k, v in pts.items() if any(k == r[0] for r in P.K)], reverse=True)[:3]
+print("  top kickers:", ", ".join(f"{k} {v:.0f}" for v, k in ks))

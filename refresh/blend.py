@@ -10,17 +10,28 @@ ALIAS={"DJ Moore":"D.J. Moore","DK Metcalf":"D.K. Metcalf","Travis Etienne Jr.":
 "Kyle Pitts Sr.":"Kyle Pitts","Aaron Jones Sr.":"Aaron Jones","K.C. Concepcion":"KC Concepcion",
 "Chig Okonkwo":"Chigoziem Okonkwo","Cameron Ward":"Cam Ward"}
 
+def _mkrow(name, tm, pos, key, nn, g="", r=""):
+    b=BASE.get(key); q=BONUS.get(key,0.0)
+    rc=RECS.get(key,0)
+    ydb = q - (0.25*rc if pos=="TE" else 0.0)     # strip the double-counted TE premium
+    return dict(p=name,tm=tm,pos=pos,bye=BYE.get(tm,0),
+        base=b,bonus=round(ydb,1),quirk=round(q,1),
+        tot=(b+ydb) if b is not None else None,av=AV.get(key,1.0),g=g,r=r,
+        ffc=R.FFC_N.get(nn), espn=R.ESPN_N.get(nn),
+        sleeper=R.SLEEPER_N.get(nn), yahoo=R.YAHOO_N.get(nn),
+        adp=R.ADP_N.get(nn), adpsd=R.SD_N.get(nn),
+        adphi=R.HI_N.get(nn), adplo=R.LO_N.get(nn),
+        trend=R.TREND_N.get(nn))
+
 rows=[]
 for (n,tm,pos,sl,es,fpadp,cons,g,r) in D.ROWS:
-    k=ALIAS.get(n,n); nn=R.norm(n)
-    b=BASE.get(k); q=BONUS.get(k,0.0)
-    rc=RECS.get(k,0)
-    ydb = q - (0.25*rc if pos=="TE" else 0.0)     # strip the double-counted TE premium
-    rows.append(dict(p=n,tm=tm,pos=pos,bye=BYE.get(tm,0),
-        base=b,bonus=round(ydb,1),quirk=round(q,1),
-        tot=(b+ydb) if b is not None else None,av=AV.get(k,1.0),
-        ffc=R.FFC_N.get(nn), espn=R.ESPN_N.get(nn),
-        sleeper=R.SLEEPER_N.get(nn), yahoo=R.YAHOO_N.get(nn)))
+    rows.append(_mkrow(n,tm,pos,ALIAS.get(n,n),R.norm(n),g,r))
+# K and DST carry no hand-written flags; their scoring is fully in score.py.
+for n,tm,a,fgm,fga,xpm,leg in P.K:
+    rows.append(_mkrow(n,tm,"K",n,R.norm(n)))
+for n,tm,a,sk,fr,it,dtd,pa,saf,ktd in P.DST:
+    # our own DST key is built directly rather than sniffed by norm()
+    rows.append(_mkrow(f"{tm} {n}",tm,"DST",f"{tm} {n}",f"dst {tm}"))
 
 # All four public sources -> dense integer rank within this pool, so the columns
 # are comparable (FFC/Yahoo are ADP in picks, ESPN/Sleeper are board ranks).
@@ -32,12 +43,13 @@ for key in ("ffc","espn","sleeper","yahoo"):
 # VOR: 12 teams, QB/2RB/2WR/TE + W-R-T + W-T + K + DST
 have=[x for x in rows if x["tot"] is not None]
 def top(pos,k): return sorted([x for x in have if x["pos"]==pos],key=lambda z:-z["tot"])[:k]
-taken={id(x) for pos,k in [("QB",12),("RB",24),("WR",24),("TE",12)] for x in top(pos,k)}
+taken={id(x) for pos,k in [("QB",12),("RB",24),("WR",24),("TE",12),("K",12),("DST",12)]
+       for x in top(pos,k)}
 for elig in (("RB","WR","TE"),("WR","TE")):
     pool=[x for x in have if id(x) not in taken and x["pos"] in elig]
     taken|={id(x) for x in sorted(pool,key=lambda z:-z["tot"])[:12]}
 REPL={}
-for pos in ("QB","RB","WR","TE"):
+for pos in ("QB","RB","WR","TE","K","DST"):
     rest=sorted([x for x in have if x["pos"]==pos and id(x) not in taken],key=lambda z:-z["tot"])
     REPL[pos]=rest[0]["tot"] if rest else 0
 for x in rows: x["vor"]=round(x["tot"]-REPL[x["pos"]],1) if x["tot"] is not None else None
@@ -48,10 +60,10 @@ for x in rows: x.setdefault("model",None)
 
 TIERS_LATER=True
 
-sh=[x["quirk"]/x["tot"] for x in rows if x["tot"]]
+sh=[x["quirk"]/x["tot"] for x in rows if x["tot"] and x["pos"] in ("QB","RB","WR","TE")]
 mu,sd=float(np.mean(sh)),float(np.std(sh))
 for x in rows:
-    if not x["tot"]: x["fit"]=None; continue
+    if not x["tot"] or x["pos"] in ("K","DST"): x["fit"]=None; continue
     f=np.clip((x["quirk"]/x["tot"]-mu)/sd*3.4,-10,10)
     if x["av"]<1.0: f-=(1.0-x["av"])*22
     if x["tot"]<70: f-=1.5
@@ -78,9 +90,6 @@ rows.sort(key=lambda z:-z["blend"])
 for i,x in enumerate(rows): x["rk"]=i+1
 for x in rows: x["gap"]=round(x["avg"]-x["rk"])
 
-# carry flags
-FL={n:(g,r) for (n,tm,pos,sl,es,fpadp,cons,g,r) in D.ROWS}
-for x in rows: x["g"],x["r"]=FL[x["p"]]
 
 def tier(seq,gap,cap):
     t,run=1,0
@@ -88,15 +97,16 @@ def tier(seq,gap,cap):
         if i>0 and (seq[i-1]["blend"]-x["blend"]>=gap or run>=cap): t+=1; run=0
         yield x,t; run+=1
 for x,t in tier(rows,13,10): x["otier"]=t
-for pos in ("QB","RB","WR","TE"):
+for pos in ("QB","RB","WR","TE","K","DST"):
     for x,t in tier([y for y in rows if y["pos"]==pos],10,7): x["ptier"]=t
 json.dump(rows,open("blend_out.json","w"))
+def _f(v,w=3): return f"{v:+{w}}" if v is not None else " "*(w-2)+"NA"
 print("replacement:",{k:round(v) for k,v in REPL.items()})
 print("\nRK T  POS   PLAYER                FFC ESPN  SLP  YH  AVG  GAP FIT")
 for x in rows[:26]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']:<3} {x['p']:22} "
           f"{str(x['ffcr']):>3} {str(x['espnr']):>4} {str(x['sleeperr']):>4} "
-          f"{str(x['yahoor']):>3} {x['avg']:5} {x['gap']:+4} {x['fit']:+3}")
+          f"{str(x['yahoor']):>3} {x['avg']:5} {x['gap']:+4} {_f(x['fit'])}")
 print("\nBIGGEST FOUR-SYSTEM DISAGREEMENTS")
 for x in sorted(rows,key=lambda z:-z["spread"])[:12]:
     print(f"  {x['p']:22} FFC {str(x['ffcr']):>3} ESPN {str(x['espnr']):>3} "

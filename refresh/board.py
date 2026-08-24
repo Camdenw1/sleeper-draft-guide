@@ -58,13 +58,14 @@ for x,t in tier(rows,13,10): x["otier"]=t
 for pos in ("QB","RB","WR","TE"):
     for x,t in tier([y for y in rows if y["pos"]==pos],10,7): x["ptier"]=t
 json.dump(rows,open("board_out.json","w"))
+def _f(v,w=3): return f"{v:+{w}}" if v is not None else " "*(w-2)+"NA"
 print("TOP 22"); print("RK T POS  PLAYER                  AVG  MODEL GAP FIT MKT  TAG")
 for x in rows[:22]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']}  {x['p']:22} {x['avg']:5} "
-          f"{str(x['model']):>4} {x['gap']:+4} {x['fit']:+3} {x['mkt']:+3}  {x['tag2']}")
+          f"{str(x['model']):>4} {x['gap']:+4} {_f(x['fit'])} {x['mkt']:+3}  {x['tag2']}")
 print("\nSLEEPERS"); 
 for x in [y for y in rows if y["tag2"]=="SLEEPER"][:14]:
-    print(f"  #{x['rk']:3} {x['p']:22} {x['pos']}  Sleeper board rank {x['sleeperr']:>3}  fit {x['fit']:+3} mkt {x['mkt']:+3}")
+    print(f"  #{x['rk']:3} {x['p']:22} {x['pos']}  Sleeper board rank {x['sleeperr']:>3}  fit {_f(x['fit'])} mkt {x['mkt']:+3}")
 print("\nMARKET DISAGREES MOST WITH PROJECTION")
 for x in sorted([y for y in rows if y["propdelta"] is not None],key=lambda z:-abs(z["propdelta"]))[:10]:
     print(f"  {x['p']:22} {x['prop']:22} proj {x['propdelta']:+6.1f}% vs line")

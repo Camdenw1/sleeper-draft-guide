@@ -15,9 +15,31 @@ refresh/                inputs + build chain
 
 ## Use
 
-Open `draft-board-2026.html` in any browser. Tap a row to cross a player off;
-state persists in localStorage so closing the tab mid-draft is safe. "Reset board"
-clears it. Filter by position to switch the tier bands from overall to positional.
+Open `draft-board-2026.html` in any browser. Tap a row to cross a player off, or
+hit the **+** next to a name to put him on your own team. State persists in
+localStorage, so closing the tab mid-draft is safe; "Reset board" clears it.
+Filter by position to switch the tier bands from overall to positional.
+
+Three panels sit above the board:
+
+- **Best available** — top of the board plus the best man left at every position
+- **Value on the board** — where your rank most disagrees with the room, skill
+  positions only (K and DST are excluded there; see below)
+- **My team** — your picks slotted into the real roster, with a bye-week clash warning
+
+Type your **next pick** number and the *Lasts* column fills in: the chance each
+player survives to that pick, from FFC's real ADP dispersion. Sort by it to find
+who you must take now versus who will still be there.
+
+### Sleeper live sync
+
+Paste your Sleeper **draft id** and your **slot** (1–12), then hit Sync. The board
+polls Sleeper's public picks endpoint every five seconds, crosses off everyone
+taken, routes your own picks into *My team*, and recomputes your next pick from
+the snake order. No auth, no setup. It gives up after three consecutive failures
+rather than hammering the API, and you can always fall back to tapping rows.
+
+The draft id is the long number in your Sleeper draft URL.
 
 ## Rebuild
 
@@ -36,6 +58,7 @@ still works if someone's API is down or the wifi isn't cooperating.
 | | |
 |---|---|
 | **#** | blended rank — half model, half public consensus, nudged by market |
+| **Lasts** | chance he's still there at your next pick, from FFC's real ADP mean and dispersion |
 | **FFC / ESPN / Sleeper / Yahoo** | each public system's rank, densely re-ranked to one slot per player |
 | **Where they land** | the four systems plotted against their own average |
 | **Model** | the unblended projection view |
@@ -51,6 +74,17 @@ Full methodology is behind the "How this works" button on the board itself.
 ## Refresh schedule
 
 Aug 28 and Sept 8. Draft is Sept 9.
+
+## The kicker thing
+
+This league scores field goals by distance — 1 to 6 points by bucket *plus* 0.10
+per yard — so a 45-yarder is worth 8.5 and a good kicker projects around 300
+points. Every public board treats kickers as interchangeable last-round filler,
+because in a normal league they are. Here they aren't: the gap between the best
+kicker and a replacement one is worth roughly as much as the gap between the best
+tight end and the twelfth. The board ranks them honestly, which is why a kicker
+shows up around pick 50 — but check the *Lasts* column before reaching, because
+ADP says you can usually still wait.
 
 ## Data sources
 

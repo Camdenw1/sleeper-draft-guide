@@ -116,8 +116,34 @@ def _yahoo_players(node):
             stack.extend(o)
 
 
+def fetch_trending(_year):
+    """Sleeper's public trending-adds feed over the past week.
+
+    Not a ranking -- a momentum signal. A player being added in volume right now
+    is a player whose ADP is stale and who will go earlier than his board rank
+    says. That is exactly the situation where you either reach a round early or
+    lose him, so it is worth seeing next to the ranks.
+    """
+    trend = _get("https://api.sleeper.app/v1/players/nfl/trending/add"
+                 "?lookback_hours=168&limit=200")
+    ids = _get("https://api.sleeper.app/v1/players/nfl", timeout=90)
+    out = {}
+    for t in trend:
+        v = ids.get(str(t.get("player_id")))
+        if not v:
+            continue
+        nm = v.get("full_name") or v.get("last_name")
+        if nm and t.get("count"):
+            out[nm] = int(t["count"])
+    return out, f"{len(out)} trending", {}
+
+
 SOURCES = [("ffc", fetch_ffc), ("espn", fetch_espn),
-           ("sleeper", fetch_sleeper), ("yahoo", fetch_yahoo)]
+           ("sleeper", fetch_sleeper), ("yahoo", fetch_yahoo),
+           ("trending", fetch_trending)]
+
+# Sources that are actual ranking columns. `trending` is a signal, not a rank.
+RANK_SOURCES = ("ffc", "espn", "sleeper", "yahoo")
 
 
 # ------------------------------------------------------------------ cache ---
@@ -145,7 +171,8 @@ def load(year=2026, refresh=False, quiet=False):
             continue
         try:
             got, note, extra = fn(year)
-            if len(got) < 50:
+            floor = 50 if key in RANK_SOURCES else 10
+            if len(got) < floor:
                 raise ValueError(f"only {len(got)} rows -- looks broken")
             data[key], notes[key] = got, note
             if extra:

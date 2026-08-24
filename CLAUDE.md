@@ -36,9 +36,17 @@ paywalled rankings; `sources.py` is the place to add a new free one.
 
 ## League rules — don't change these without being asked
 
-Half PPR · **0.75 per catch for TE** (0.5 baseline + 0.25 premium) · **+3 at 100
-rush/rec yards, +2 more at 200** · +3 at 300 and +2 at 400 passing · 12 teams ·
-QB, 2RB, 2WR, TE, RB/WR/TE flex, WR/TE flex, K, DST, 6 bench.
+Half PPR · **0.75 per catch for TE** (0.5 baseline + 0.25 premium) · INT **-2** ·
+yardage bonuses are **exclusive tiers**: **+3 for 100-199 rush/rec, +4 for 200+**;
++3 for 300-399 pass, +4 for 400+ · kickers scored **by distance**, 1-6 by bucket
+**plus 0.10/yard** (a 45-yarder is 8.5, so kickers project ~300 and rank far above
+every public board -- this is the biggest single edge on the board) · DST
+points-allowed tiers 0 / 1-6 / 7-13 / 14-20 / 21-27 / 28-34 / 35+ pay
++10 / +7 / +4 / +1 / 0 / -1 / -4 · 12 teams · QB, 2RB, 2WR, TE, RB/WR/TE flex,
+WR/TE flex, K, DST, 6 bench.
+
+Verified against the league's scoring page on 24 Aug 2026. Fumble lost (-2) and
+2-pt conversions are NOT modelled -- players.py carries no fumble or 2-pt data.
 
 ## Known limitations — worth stating rather than papering over
 
