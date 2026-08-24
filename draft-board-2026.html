@@ -115,7 +115,7 @@ thead th{border-bottom:1px solid var(--line2)}
  font:10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
 
 /* ---- draft-day panels ---------------------------------------------------- */
-.decks{max-width:1500px;margin:0 auto;padding:14px 20px 0;display:grid;gap:12px;
+.decks{max-width:1500px;margin:0 auto;padding:18px 20px 4px;display:grid;gap:12px;
 grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
 .deck{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:12px 13px}
 .deck h4{margin:0 0 9px;font:600 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
@@ -208,6 +208,16 @@ source's opinions; where you disagree, override it.</p>
 </div>
 </header>
 
+
+<div class="decks">
+ <div class="deck"><h4>Best available <span id="ba-note"></span></h4>
+  <div class="ba" id="bestavail"></div></div>
+ <div class="deck"><h4>Value coming up <span id="v-note">2 per position · ↑ rising</span></h4>
+  <div class="ba" id="values"></div></div>
+ <div class="deck"><h4>My team <span id="mt-note"></span></h4>
+  <div class="slots" id="myteam"></div></div>
+</div>
+
 <div class="rail"><div class="railin">
 <div class="chips" id="posf">
 <button data-p="ALL" class="on">All</button><button data-p="QB">QB</button>
@@ -222,16 +232,6 @@ source's opinions; where you disagree, override it.</p>
 <button id="rs" class="danger">Reset board</button>
 </div></div>
 
-
-<div class="decks">
- <div class="deck"><h4>Best available <span id="ba-note"></span></h4>
-  <div class="ba" id="bestavail"></div></div>
- <div class="deck"><h4>Value coming up <span id="v-note">2 per position · ↑ rising</span></h4>
-  <div class="ba" id="values"></div></div>
- <div class="deck"><h4>My team <span id="mt-note"></span></h4>
-  <div class="slots" id="myteam"></div></div>
-</div>
-
 <div class="wrap"><table><thead><tr>
 <th class="l" data-s="rk">#<span class="ar"></span></th>
 <th class="l" data-s="p">Player &amp; flags<span class="ar"></span></th>
@@ -240,7 +240,7 @@ source's opinions; where you disagree, override it.</p>
 <th class="hide-s" data-s="lastp">Lasts<span class="ar"></span></th>
 <th class="grp" data-s="ffcr">FFC<span class="ar"></span></th>
 <th class="grp" data-s="espnr">ESPN<span class="ar"></span></th>
-<th class="grp" data-s="sleeperr">Sleeper<span class="ar"></span></th>
+<th class="grp" data-s="sleeperr" title="Sleeper search_rank -- their search/popularity ordering, not ADP. Sleeper exposes no public ADP.">Sleeper*<span class="ar"></span></th>
 <th class="grp" data-s="yahoor">Yahoo<span class="ar"></span></th>
 <th data-s="avg">Avg<span class="ar"></span></th>
 <th class="hide-m" data-s="spread">Where they land<span class="ar"></span></th>
@@ -251,7 +251,11 @@ source's opinions; where you disagree, override it.</p>
 </tr></thead><tbody id="rows"></tbody></table>
 <p class="hint">
 FFC / ESPN / Sleeper / Yahoo = each public system's rank, densely re-ranked to one slot per player.
-FFC is real half-PPR 12-team ADP. Avg = mean of the four (NR excluded).
+<b>FFC is real half-PPR 12-team ADP from thousands of live mock drafts</b> — the only source whose
+format matches this league — so it carries double weight in the average. Yahoo is real ADP at their
+default 0.5/reception. ESPN publish one generic board (their standard and PPR ranks are identical).
+<b>Sleeper* is search_rank — their search/popularity ordering, not ADP</b>; Sleeper exposes no public
+ADP anywhere, so it is weighted half. Avg = that weighted mean (NR excluded).
 Where they land = each system plotted against their average, window &plusmn;40 slots<span class="key d-ffc"></span>FFC<span class="key d-espn"></span>ESPN<span class="key d-slp"></span>Sleeper<span class="key d-yh"></span>Yahoo. A wide plot means nobody agrees, which is where the value hides.<br>
 Model = where the projection model alone puts him; the difference between Model and the blended rank
 shows how far the crowd pulled him. Gap = average public rank minus the blended rank; positive means

@@ -61,7 +61,7 @@ still works if someone's API is down or the wifi isn't cooperating.
 |---|---|
 | **#** | blended rank — half model, half public consensus, nudged by market |
 | **Lasts** | chance he's still there at your next pick, from FFC's real ADP mean and dispersion |
-| **FFC / ESPN / Sleeper / Yahoo** | each public system's rank, densely re-ranked to one slot per player |
+| **FFC / ESPN / Sleeper\* / Yahoo** | each public system's rank, densely re-ranked to one slot per player. Weighted, not averaged flat — see below |
 | **Where they land** | the four systems plotted against their own average |
 | **Model** | the unblended projection view |
 | **Gap** | public average minus blended rank; positive means he should fall to you |
@@ -96,8 +96,14 @@ All rankings come from free, public, no-auth endpoints, fetched at build time by
 |---|---|---|
 | [Fantasy Football Calculator](https://fantasyfootballcalculator.com) | Real **half-PPR, 12-team ADP** from thousands of public mock drafts — the only source whose format matches this league exactly, so it anchors the blend | `/api/v1/adp/half-ppr` |
 | ESPN | Public fantasy draft-rank board | `lm-api-reads.fantasy.espn.com` |
-| Sleeper | Public player dump, draft-room ordering | `api.sleeper.app/v1/players/nfl` |
+| Sleeper\* | Public player dump. **`search_rank` is search/popularity ordering, not ADP** — Sleeper exposes no public ADP anywhere, so this column is weighted half | `api.sleeper.app/v1/players/nfl` |
 | Yahoo | Public draft-analysis average pick | `pub-api-ro.fantasysports.yahoo.com` |
+
+**The four are weighted 2 / 1 / 1 / 0.5 (FFC / Yahoo / ESPN / Sleeper), not averaged
+flat.** FFC is the only source in real half-PPR 12-team format, so it anchors. Yahoo
+is real ADP at their default 0.5/reception. ESPN publish one generic board — their
+STANDARD and PPR ranks are byte-identical, so there is no half-PPR variant to ask
+for. Sleeper is popularity, not draft position, so it gets the smallest say.
 
 Season stat projections and the betting-market layer are point-in-time snapshots
 in `refresh/players.py` and `refresh/market.py`. Green/red flag notes are

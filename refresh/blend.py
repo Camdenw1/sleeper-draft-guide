@@ -69,12 +69,26 @@ for x in rows:
     if x["tot"]<70: f-=1.5
     x["fit"]=int(round(float(np.clip(f,-10,10))))
 
+# The four sources do not deserve equal say.
+#   ffc     REAL half-PPR 12-team ADP from thousands of actual drafts. The only
+#           source whose format matches this league, so it carries double weight.
+#   yahoo   real ADP, and Yahoo's default scoring is 0.5/reception -> half PPR.
+#   espn    one generic board; their STANDARD and PPR ranks are byte-identical,
+#           so there is no half-PPR variant to ask for.
+#   sleeper search_rank, which is search POPULARITY, not draft position -- Sleeper
+#           exposes no public ADP anywhere. Kept because the league drafts there,
+#           but halved so it cannot drag the consensus around.
+SRCW={"ffcr":2.0,"yahoor":1.0,"espnr":1.0,"sleeperr":0.5}
 for x in rows:
-    v=[y for y in (x["ffcr"],x["espnr"],x["sleeperr"],x["yahoor"]) if y is not None]
-    x["nsrc"]=len(v)
-    # Sleeper covers the whole pool, so v is never empty; guard anyway.
-    x["avg"]=round(sum(v)/len(v),1) if v else float(len(rows))
-    x["spread"]=max(v)-min(v) if len(v)>1 else 0
+    pairs=[(x[k],w) for k,w in SRCW.items() if x[k] is not None]
+    x["nsrc"]=len(pairs)
+    if pairs:
+        tw=sum(w for _,w in pairs)
+        x["avg"]=round(sum(v*w for v,w in pairs)/tw,1)
+    else:
+        x["avg"]=float(len(rows))     # Sleeper covers the pool, so this is a guard
+    vs=[v for v,_ in pairs]
+    x["spread"]=max(vs)-min(vs) if len(vs)>1 else 0
 # Translate each player's average public rank into points-above-replacement by
 # reading off the model's own value curve at that slot -> a "market value".
 curve=sorted([x["vor"] for x in rows if x["vor"] is not None], reverse=True)
