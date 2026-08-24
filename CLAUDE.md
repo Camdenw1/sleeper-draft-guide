@@ -25,9 +25,9 @@ refreshes never clobber UI work, and UI work never has to touch the pipeline.
    blends model with public consensus, applies the market layer, assigns tiers and tags
 
 Data modules: `players.py` (projections + availability), `hp_data.py` (player pool
-+ hand-written green/red flags), `sources.py` (fetches four free public ranking
-sources live: FFC half-PPR ADP, ESPN, Sleeper, Yahoo — cached 6h, falls back to
-cache on failure), `ranks.py` (normalizes those into joinable columns),
++ hand-written green/red flags), `sources.py` (fetches three free public **ADP**
+feeds live — FFC half-PPR 12-team, ESPN, Yahoo — cached 6h, falls back to cache
+per-source on failure), `ranks.py` (normalizes those into joinable columns),
 `market.py` (win totals, props, award odds).
 
 The paid sources this project started with — FantasyPros ECR and a Flock Fantasy
@@ -62,6 +62,24 @@ to match the page** without asking -- that mismatch is deliberate.
 - The **Value coming up** panel caps at two per position and only shows players in
   range of the next pick. Uncapped it is entirely tight ends, because the 0.75
   premium means every TE beats public ADP. True, but not a draft strategy.
+
+## Ranking sources — all three are real ADP. Keep it that way.
+
+Weighted 2 / 1 / 1 (FFC / Yahoo / ESPN) in `SRCW` in blend.py, not averaged flat.
+Only FFC is genuinely half-PPR 12-team, so it anchors. ESPN must read
+`ownership.averageDraftPosition`, **not** `draftRanksByRankType` — that board's
+STANDARD and PPR variants are byte-identical and carry no format information.
+
+Two sources were tested and rejected. Don't re-add either without new evidence:
+
+- **Sleeper** publishes no ADP anywhere. `search_rank` is search popularity, and
+  their GraphQL has no adp field (every draft query needs a `draft_id`). Sleeper
+  is still fetched, but only for the trending/HOT signal.
+- **MyFantasyLeague** has a real public ADP endpoint and no way to exclude
+  superflex drafts, which its pool is full of. Measured against FFC on this board,
+  MFL's QBs ran 38 slots earlier (Josh Allen 3rd overall vs FFC's 33rd) while RBs
+  and WRs ran 7 and 20 later. `IS_PPR` filters scoring, not roster format.
+  `fetch_mfl` is kept in sources.py, unused, recording exactly this.
 
 ## Known limitations — worth stating rather than papering over
 
