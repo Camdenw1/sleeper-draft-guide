@@ -29,8 +29,10 @@ that file is hand-tuned presentation and the whole architecture exists to protec
   preseason" is wrong once he's playing. This is the part that decays fastest and
   the part most worth your attention.
 
-**`refresh/sources.py`** — the four public ranking feeds
-- Nothing to paste. FFC, ESPN, Sleeper and Yahoo are fetched at build time.
+**`refresh/sources.py`** — the three public ADP feeds
+- Nothing to paste. FFC, ESPN and Yahoo ADP are fetched at build time.
+- All three are REAL ADP. Don't add a source that isn't (see sources.py for
+  why Sleeper's search_rank and MyFantasyLeague were both rejected).
 - Cached six hours in `pubranks_cache.json`; force a pull with
   `python3 refresh/sources.py --refresh`.
 - If a source fails it falls back to cache and says so in the build output. **If a

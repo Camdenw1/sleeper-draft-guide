@@ -76,12 +76,11 @@ def norm(n):
 
 DATA, NOTES, EXTRAS = sources.load()
 
-# Each source is a name -> (ADP or board rank). Lower is better in all four, so
-# they are directly comparable once densely re-ranked within the pool (blend.py).
-FFC_N     = {norm(k): v for k, v in DATA.get("ffc", {}).items()}
-ESPN_N    = {norm(k): v for k, v in DATA.get("espn", {}).items()}
-SLEEPER_N = {norm(k): v for k, v in DATA.get("sleeper", {}).items()}
-YAHOO_N   = {norm(k): v for k, v in DATA.get("yahoo", {}).items()}
+# Every source is now a real ADP in picks. Lower is better in all four, so they are
+# directly comparable once densely re-ranked within the pool (blend.py).
+FFC_N   = {norm(k): v for k, v in DATA.get("ffc", {}).items()}
+ESPN_N  = {norm(k): v for k, v in DATA.get("espn", {}).items()}
+YAHOO_N = {norm(k): v for k, v in DATA.get("yahoo", {}).items()}
 
 # FFC also hands us bye weeks and real ADP dispersion for free. The dispersion is
 # the useful part: it is measured disagreement among actual drafters, per player,
@@ -98,8 +97,7 @@ _tr = DATA.get("trending", {})
 _mx = max(_tr.values()) if _tr else 1
 TREND_N = {norm(k): round(100.0 * v / _mx) for k, v in _tr.items()}
 
-COLUMNS = [("ffc", FFC_N), ("espn", ESPN_N),
-           ("sleeper", SLEEPER_N), ("yahoo", YAHOO_N)]
+COLUMNS = [("ffc", FFC_N), ("espn", ESPN_N), ("yahoo", YAHOO_N)]
 
 if __name__ == "__main__":
     for k, v in NOTES.items():

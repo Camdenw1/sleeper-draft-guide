@@ -2,7 +2,7 @@
 
 A draft board for a 12-team half-PPR league with a TE premium and 100/200-yard
 bonuses. Rankings blend a projection model rescored for this exact scoring with
-four public ranking systems and the betting market.
+three public ADP sources and the betting market.
 
 ```
 draft-board-2026.html   presentation — hand-edited, never overwritten
@@ -49,7 +49,7 @@ The draft id is the long number in your Sleeper draft URL.
 python3 refresh/build.py
 ```
 
-Takes about ten seconds. Fetches the four public ranking sources live, then aborts
+Takes about ten seconds. Fetches the three public ADP sources live, then aborts
 rather than overwriting if the pipeline produces fewer than 150 players. Fetched
 ranks are cached for six hours in `refresh/pubranks_cache.json` (gitignored), and
 any source that fails to fetch falls back to that cache — so a draft-day rebuild
@@ -61,8 +61,8 @@ still works if someone's API is down or the wifi isn't cooperating.
 |---|---|
 | **#** | blended rank — half model, half public consensus, nudged by market |
 | **Lasts** | chance he's still there at your next pick, from FFC's real ADP mean and dispersion |
-| **FFC / ESPN / Sleeper\* / Yahoo** | each public system's rank, densely re-ranked to one slot per player. Weighted, not averaged flat — see below |
-| **Where they land** | the four systems plotted against their own average |
+| **FFC / ESPN / Yahoo** | each source's ADP, densely re-ranked to one slot per player. Weighted 2 / 1 / 1, not averaged flat — see below |
+| **Where they land** | the three sources plotted against their own average |
 | **Model** | the unblended projection view |
 | **Gap** | public average minus blended rank; positive means he should fall to you |
 | **Market** | −10 to +10; prop line vs projection, or team win total as fallback |
@@ -95,15 +95,23 @@ All rankings come from free, public, no-auth endpoints, fetched at build time by
 | Source | What it gives | Endpoint |
 |---|---|---|
 | [Fantasy Football Calculator](https://fantasyfootballcalculator.com) | Real **half-PPR, 12-team ADP** from thousands of public mock drafts — the only source whose format matches this league exactly, so it anchors the blend | `/api/v1/adp/half-ppr` |
-| ESPN | Public fantasy draft-rank board | `lm-api-reads.fantasy.espn.com` |
-| Sleeper\* | Public player dump. **`search_rank` is search/popularity ordering, not ADP** — Sleeper exposes no public ADP anywhere, so this column is weighted half | `api.sleeper.app/v1/players/nfl` |
+| ESPN | Real ADP (`ownership.averageDraftPosition`), not their editorial board | `lm-api-reads.fantasy.espn.com` |
+| Sleeper | **Not a ranking column.** `search_rank` is search popularity, not ADP, and Sleeper publishes no ADP anywhere — used only for the trending/HOT signal | `api.sleeper.app/v1/players/nfl` |
 | Yahoo | Public draft-analysis average pick | `pub-api-ro.fantasysports.yahoo.com` |
 
-**The four are weighted 2 / 1 / 1 / 0.5 (FFC / Yahoo / ESPN / Sleeper), not averaged
-flat.** FFC is the only source in real half-PPR 12-team format, so it anchors. Yahoo
-is real ADP at their default 0.5/reception. ESPN publish one generic board — their
-STANDARD and PPR ranks are byte-identical, so there is no half-PPR variant to ask
-for. Sleeper is popularity, not draft position, so it gets the smallest say.
+**All three columns are real ADP** — what drafters actually did, not an editor's
+list — and they are weighted **2 / 1 / 1 (FFC / Yahoo / ESPN)**, not averaged flat.
+FFC is the only source in real half-PPR 12-team format, so it anchors. Yahoo is
+average pick at their default 0.5/reception. ESPN is average draft position across
+ESPN drafts.
+
+Two sources were tried and rejected rather than padding the count. **Sleeper**
+publishes no ADP at all — `search_rank` is search popularity, and their GraphQL has
+no ADP field either (every draft query needs a `draft_id`). **MyFantasyLeague** has
+a real ADP endpoint but no way to exclude superflex drafts, and their pool is full
+of them: measured against FFC, MFL's QBs went an average of 38 slots earlier (Josh
+Allen 3rd overall vs FFC's 33rd) while RBs and WRs went later. That would have
+wrecked QB ranking in a 1QB league.
 
 Season stat projections and the betting-market layer are point-in-time snapshots
 in `refresh/players.py` and `refresh/market.py`. Green/red flag notes are

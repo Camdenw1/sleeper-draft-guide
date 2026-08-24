@@ -18,7 +18,7 @@ def _mkrow(name, tm, pos, key, nn, g="", r=""):
         base=b,bonus=round(ydb,1),quirk=round(q,1),
         tot=(b+ydb) if b is not None else None,av=AV.get(key,1.0),g=g,r=r,
         ffc=R.FFC_N.get(nn), espn=R.ESPN_N.get(nn),
-        sleeper=R.SLEEPER_N.get(nn), yahoo=R.YAHOO_N.get(nn),
+        yahoo=R.YAHOO_N.get(nn),
         adp=R.ADP_N.get(nn), adpsd=R.SD_N.get(nn),
         adphi=R.HI_N.get(nn), adplo=R.LO_N.get(nn),
         trend=R.TREND_N.get(nn))
@@ -33,9 +33,9 @@ for n,tm,a,sk,fr,it,dtd,pa,saf,ktd in P.DST:
     # our own DST key is built directly rather than sniffed by norm()
     rows.append(_mkrow(f"{tm} {n}",tm,"DST",f"{tm} {n}",f"dst {tm}"))
 
-# All four public sources -> dense integer rank within this pool, so the columns
-# are comparable (FFC/Yahoo are ADP in picks, ESPN/Sleeper are board ranks).
-for key in ("ffc","espn","sleeper","yahoo"):
+# All four sources are real ADP in picks -> dense integer rank within this pool,
+# so the columns are directly comparable to each other and to our own rank.
+for key in ("ffc","espn","yahoo"):
     have=sorted([x for x in rows if x[key] is not None], key=lambda z:z[key])
     for i,x in enumerate(have): x[key+"r"]=i+1
     for x in rows: x.setdefault(key+"r",None)
@@ -73,12 +73,15 @@ for x in rows:
 #   ffc     REAL half-PPR 12-team ADP from thousands of actual drafts. The only
 #           source whose format matches this league, so it carries double weight.
 #   yahoo   real ADP, and Yahoo's default scoring is 0.5/reception -> half PPR.
-#   espn    one generic board; their STANDARD and PPR ranks are byte-identical,
-#           so there is no half-PPR variant to ask for.
-#   sleeper search_rank, which is search POPULARITY, not draft position -- Sleeper
-#           exposes no public ADP anywhere. Kept because the league drafts there,
-#           but halved so it cannot drag the consensus around.
-SRCW={"ffcr":2.0,"yahoor":1.0,"espnr":1.0,"sleeperr":0.5}
+#   espn    real ADP from ESPN drafts (ownership.averageDraftPosition). Not their
+#           editorial board, whose STANDARD and PPR variants are byte-identical
+#           and therefore carry no format information at all.
+# MyFantasyLeague was trialled as a fourth and dropped: its pool is riddled with
+# superflex drafts, which pulled QBs 38 slots early. See fetch_mfl in sources.py.
+# Sleeper is deliberately absent: search_rank is search popularity, not draft
+# position, and Sleeper publishes no ADP anywhere (their GraphQL has no adp field
+# either). It is still fetched for the trending signal.
+SRCW={"ffcr":2.0,"yahoor":1.0,"espnr":1.0}
 for x in rows:
     pairs=[(x[k],w) for k,w in SRCW.items() if x[k] is not None]
     x["nsrc"]=len(pairs)
@@ -86,7 +89,7 @@ for x in rows:
         tw=sum(w for _,w in pairs)
         x["avg"]=round(sum(v*w for v,w in pairs)/tw,1)
     else:
-        x["avg"]=float(len(rows))     # Sleeper covers the pool, so this is a guard
+        x["avg"]=float(len(rows))     # nobody ranked him at all -- sort him last
     vs=[v for v,_ in pairs]
     x["spread"]=max(vs)-min(vs) if len(vs)>1 else 0
 # Translate each player's average public rank into points-above-replacement by
@@ -133,12 +136,12 @@ for pos in ("QB","RB","WR","TE","K","DST"):
 json.dump(rows,open("blend_out.json","w"))
 def _f(v,w=3): return f"{v:+{w}}" if v is not None else " "*(w-2)+"NA"
 print("replacement:",{k:round(v) for k,v in REPL.items()})
-print("\nRK T  POS   PLAYER                FFC ESPN  SLP  YH  AVG  GAP FIT")
+print("\nRK T  POS   PLAYER                FFC ESPN   YH  AVG  GAP FIT")
 for x in rows[:26]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']:<3} {x['p']:22} "
-          f"{str(x['ffcr']):>3} {str(x['espnr']):>4} {str(x['sleeperr']):>4} "
-          f"{str(x['yahoor']):>3} {x['avg']:5} {x['gap']:+4} {_f(x['fit'])}")
-print("\nBIGGEST FOUR-SYSTEM DISAGREEMENTS")
+          f"{str(x['ffcr']):>3} {str(x['espnr']):>4} {str(x['yahoor']):>4} "
+          f"{x['avg']:5} {x['gap']:+4} {_f(x['fit'])}")
+print("\nBIGGEST THREE-SYSTEM DISAGREEMENTS")
 for x in sorted(rows,key=lambda z:-z["spread"])[:12]:
     print(f"  {x['p']:22} FFC {str(x['ffcr']):>3} ESPN {str(x['espnr']):>3} "
-          f"SLP {str(x['sleeperr']):>3} YH {str(x['yahoor']):>3}  spread {x['spread']}")
+          f"YH {str(x['yahoor']):>3}  spread {x['spread']}")

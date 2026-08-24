@@ -57,7 +57,7 @@ for x in rows: x["gap"]=round(x["avg"]-x["rk"])
 
 # ---------- sleeper / value tags ----------------------------------------
 for x in rows:
-    sl=x["sleeperr"]; tag=""
+    sl=x["ffcr"]; tag=""
     if sl and sl-x["rk"]>=25 and x["rk"]>=75: tag="SLEEPER"
     elif x["gap"]>=18: tag="VALUE"
     elif x["gap"]<=-18: tag="FADE"
@@ -79,7 +79,7 @@ for x in rows[:22]:
           f"{str(x['model']):>4} {x['gap']:+4} {_f(x['fit'])} {x['mkt']:+3}  {x['tag2']}")
 print("\nSLEEPERS"); 
 for x in [y for y in rows if y["tag2"]=="SLEEPER"][:14]:
-    print(f"  #{x['rk']:3} {x['p']:22} {x['pos']}  Sleeper board rank {x['sleeperr']:>3}  fit {_f(x['fit'])} mkt {x['mkt']:+3}")
+    print(f"  #{x['rk']:3} {x['p']:22} {x['pos']}  FFC half-PPR ADP rank {x['ffcr']:>3}  fit {_f(x['fit'])} mkt {x['mkt']:+3}")
 print("\nMARKET DISAGREES MOST WITH PROJECTION")
 for x in sorted([y for y in rows if y["propdelta"] is not None],key=lambda z:-abs(z["propdelta"]))[:10]:
     print(f"  {x['p']:22} {x['prop']:22} proj {x['propdelta']:+6.1f}% vs line")

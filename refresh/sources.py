@@ -1,4 +1,4 @@
-"""Fetch public half-PPR draft rankings from four free, no-auth sources.
+"""Fetch public half-PPR draft ADP from three free, no-auth sources.
 
 Replaces the old hand-pasted FantasyPros ECR and Flock Fantasy exports, which were
 paid products. Everything here is a public endpoint that returns JSON without a key.
@@ -6,9 +6,14 @@ paid products. Everything here is a public endpoint that returns JSON without a 
   FFC     fantasyfootballcalculator.com -- REAL half-PPR 12-team ADP from public
           mock drafts. This is the only source whose format exactly matches the
           league (half PPR, 12 teams), so it is the anchor.
-  ESPN    ESPN's public fantasy read API -- their own PPR draft-rank board.
-  SLEEPER Sleeper's public player dump -- `search_rank`, their draft-room ordering.
-  YAHOO   Yahoo's public draft-analysis feed -- average_pick across their drafts.
+  ESPN    ESPN's real ADP (ownership.averageDraftPosition), not their editorial
+          board -- that board's STANDARD and PPR variants are byte-identical.
+  YAHOO   Yahoo's public draft-analysis feed -- average_pick across their drafts,
+          where the default league scoring is 0.5/reception.
+
+Every column is real ADP from real drafts. Sleeper is still fetched, but only for
+the trending signal: `search_rank` is search popularity, not draft position, and
+Sleeper publishes no ADP anywhere. See fetch_mfl for why MyFantasyLeague is out.
 
 Results are cached to pubranks_cache.json (gitignored) so a draft-day rebuild still
 works without a network, and so repeated builds don't hammer anyone's API.
@@ -44,7 +49,12 @@ def fetch_ffc(year):
 
 
 def fetch_espn(year):
-    """ESPN's public read API. No auth; needs the x-fantasy-filter header."""
+    """ESPN's real ADP from ESPN drafts (ownership.averageDraftPosition).
+
+    Deliberately NOT draftRanksByRankType: that is a generic editorial board, and
+    ESPN's STANDARD and PPR variants of it are byte-identical, so it carries no
+    format information at all. averageDraftPosition is what people actually did.
+    """
     filt = json.dumps({"players": {"limit": 400, "sortDraftRanks": {
         "sortPriority": 100, "sortAsc": True, "value": "PPR"}}})
     d = _get(f"https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/"
@@ -53,11 +63,11 @@ def fetch_espn(year):
     out = {}
     for p in d.get("players", []):
         pp = p.get("player", p)
-        rk = ((pp.get("draftRanksByRankType") or {}).get("PPR") or {}).get("rank")
+        adp = (pp.get("ownership") or {}).get("averageDraftPosition")
         nm = pp.get("fullName")
-        if nm and rk:
-            out[nm] = rk
-    return out, f"{len(out)} ranked", {}
+        if nm and adp and adp > 0:
+            out[nm] = float(adp)
+    return out, f"{len(out)} with ADP", {}
 
 
 def fetch_sleeper(_year):
@@ -138,12 +148,49 @@ def fetch_trending(_year):
     return out, f"{len(out)} trending", {}
 
 
-SOURCES = [("ffc", fetch_ffc), ("espn", fetch_espn),
-           ("sleeper", fetch_sleeper), ("yahoo", fetch_yahoo),
+def fetch_mfl(year):
+    """MyFantasyLeague ADP. NOT USED -- kept only so nobody re-adds it blind.
+
+    MFL's ADP endpoint has no way to exclude superflex / 2QB drafts, and their
+    pool is full of them. Measured against FFC on the 2026 board, MFL's QBs went
+    an average of 38 slots EARLIER (Josh Allen 3rd overall vs FFC's 33rd) while
+    its RBs and WRs went 7 and 20 slots later. That is superflex contamination,
+    and it would wreck QB ranking in this 1QB league. IS_PPR=1 filters scoring,
+    not roster format, so there is no fix on their side.
+    """
+    d = _get(f"https://api.myfantasyleague.com/{year}/export"
+             "?TYPE=adp&FCOUNT=12&IS_PPR=1&IS_MOCK=-1&IS_KEEPER=N&JSON=1")
+    adp = d["adp"]
+    rows = adp["player"]
+    names = _get(f"https://api.myfantasyleague.com/{year}/export?TYPE=players&JSON=1",
+                 timeout=60)["players"]["player"]
+    idx = {p["id"]: p for p in names}
+    out = {}
+    for r in rows:
+        p = idx.get(r.get("id"))
+        ap = r.get("averagePick")
+        if not p or not ap:
+            continue
+        raw = p.get("name", "")
+        if p.get("position") == "Def":
+            nm = raw.replace(",", " ").strip() + " Defense"   # "Texans, Houston"
+        elif "," in raw:
+            last, first = [t.strip() for t in raw.split(",", 1)]
+            nm = f"{first} {last}"
+        else:
+            nm = raw.strip()
+        if nm:
+            out[nm] = float(ap)
+    return out, f"{adp.get('totalDrafts','?')} drafts", {}
+
+
+SOURCES = [("ffc", fetch_ffc), ("espn", fetch_espn), ("yahoo", fetch_yahoo),
            ("trending", fetch_trending)]
 
-# Sources that are actual ranking columns. `trending` is a signal, not a rank.
-RANK_SOURCES = ("ffc", "espn", "sleeper", "yahoo")
+# Every ranking column is now REAL ADP from real drafts. Sleeper was dropped as a
+# column -- search_rank is search popularity, not draft position, and Sleeper
+# publishes no ADP anywhere -- but is still fetched for the trending signal.
+RANK_SOURCES = ("ffc", "espn", "yahoo")
 
 
 # ------------------------------------------------------------------ cache ---
