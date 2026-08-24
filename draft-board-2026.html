@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Half-PPR + Bonuses Draft Board — 2026</title>
+<style>
+
+:root{
+  --paper:#FBFAF7; --panel:#FFFFFF; --row:#F4F2ED; --line:#E6E2D9; --line2:#D2CCC0;
+  --ink:#1E252C; --dim:#6C7580; --dimmer:#98A0A9;
+  --good:#2E7D5B; --goodbg:#E4F1EA; --bad:#B3462F; --badbg:#FAE7E1;
+  --warn:#B5842B; --info:#2F6E9E;
+  --qb:#DDEBF5; --qbi:#1D5580; --rb:#DFEEE6; --rbi:#1F6247;
+  --wr:#F7EEDA; --wri:#8A6314; --te:#EEE5F4; --tei:#6A3E8A;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Inter,system-ui,-apple-system,sans-serif;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+header{padding:22px 20px 0;max-width:1500px;margin:0 auto}
+.kicker{font:600 10px/1.5 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--good);margin-bottom:10px}
+h1{margin:0;font:800 clamp(24px,4vw,38px)/1 var(--sans);letter-spacing:-.03em}
+h1 em{font-style:normal;color:var(--good)}
+.sub{margin:10px 0 0;max-width:70ch;color:var(--dim);font-size:13.5px;line-height:1.55}
+.note{margin:12px 0 0;max-width:70ch;font:11.5px/1.6 var(--mono);color:var(--dimmer);
+border-left:3px solid var(--warn);padding-left:11px}
+.rail{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.96);backdrop-filter:blur(10px);
+border-bottom:1px solid var(--line);margin-top:18px}
+.railin{max-width:1500px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+button{font-family:var(--mono);cursor:pointer;border:1px solid var(--line2);background:transparent;
+color:var(--dim);border-radius:2px;padding:6px 11px;font-size:11px;letter-spacing:.08em;
+text-transform:uppercase;transition:background .12s,color .12s,border-color .12s}
+button:hover{color:var(--ink);border-color:var(--dim)}
+button:focus-visible{outline:2px solid var(--good);outline-offset:2px}
+button.on{background:var(--good);border-color:var(--good);color:#0D1418;font-weight:700}
+#q{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--line2);
+color:var(--ink);padding:7px 10px;border-radius:2px;width:150px}
+#q:focus{outline:none;border-color:var(--good)}
+.spacer{flex:1}.danger:hover{border-color:var(--bad);color:var(--bad)}
+.tally{font:11px/1 var(--mono);color:var(--dimmer);letter-spacing:.05em;white-space:nowrap}
+.tally b{color:var(--ink);font-weight:600}
+.wrap{max-width:1500px;margin:0 auto;padding:0 20px 90px}
+table{width:100%;border-collapse:collapse;margin-top:14px}
+thead th{position:sticky;top:53px;z-index:10;background:var(--paper);font:600 9.5px/1.3 var(--mono);
+letter-spacing:.12em;text-transform:uppercase;color:var(--dimmer);text-align:right;padding:11px 7px;
+border-bottom:1px solid var(--line2);cursor:pointer;user-select:none;white-space:nowrap}
+thead th.l{text-align:left}thead th:hover{color:var(--ink)}thead th.sorted{color:var(--good)}
+thead th.grp{color:var(--good);opacity:.75}thead th .ar{opacity:.55;font-size:8px}
+tbody tr{border-bottom:1px solid var(--line);cursor:pointer}
+tbody tr:hover{background:var(--row)}tbody tr.gone{opacity:.26}
+tbody tr.gone .nm{text-decoration:line-through}
+td{padding:8px 7px;font:12.5px/1.35 var(--mono);text-align:right;font-variant-numeric:tabular-nums;
+white-space:nowrap;vertical-align:top}
+td.l{text-align:left;white-space:normal}
+.rk{color:var(--ink);font-weight:700;width:34px}
+.nm{font-family:var(--sans);font-weight:600;font-size:13.5px;letter-spacing:-.01em}
+.tm{color:var(--dimmer);font-size:10.5px;letter-spacing:.06em;margin-left:7px}
+.pill{display:inline-block;min-width:34px;text-align:center;font:700 10px/1 var(--mono);
+padding:4px 5px;border-radius:2px;color:#0D1418}
+.QB{background:var(--qb);color:var(--qbi)}.RB{background:var(--rb);color:var(--rbi)}.WR{background:var(--wr);color:var(--wri)}.TE{background:var(--te);color:var(--tei)}
+.ptier{display:block;font:600 9.5px/1.6 var(--mono);color:var(--dimmer);letter-spacing:.08em}
+.site{color:var(--dim);width:42px}.avg{font-weight:700;color:var(--ink)}
+.up{color:var(--good)}.dn{color:var(--bad)}.flat{color:var(--dimmer)}
+.spread{position:relative;width:96px;height:20px;margin:0 auto}
+.spread .axis{position:absolute;top:9px;left:0;right:0;height:1px;background:var(--line2)}
+.spread .mid{position:absolute;top:4px;left:50%;width:1px;height:11px;background:var(--dim)}
+.spread b{position:absolute;top:6px;width:6px;height:6px;border-radius:50%;transform:translateX(-3px);opacity:.9}
+.d-sl{background:var(--good)}.d-es{background:var(--bad)}.d-fp{background:var(--warn)}.d-fk{background:var(--info)}
+.spnum{display:block;font-size:9.5px;color:var(--dimmer);text-align:center;letter-spacing:.06em}
+.fit{width:74px}
+.fitbar{position:relative;width:64px;height:7px;background:var(--line);margin:3px auto 0;border-radius:1px}
+.fitbar i{position:absolute;top:0;height:100%;border-radius:1px}
+.fitbar .z{position:absolute;top:-2px;left:50%;width:1px;height:11px;background:var(--dimmer)}
+.fitn{font-weight:700;font-size:12.5px}
+.flags{margin-top:5px;display:flex;flex-direction:column;gap:3px;max-width:70ch}
+.flag{font-family:var(--sans);font-size:11.5px;line-height:1.42;padding-left:15px;position:relative;color:var(--dim)}
+.flag:before{position:absolute;left:0;top:0;font:700 11px/1.45 var(--mono)}
+.fg:before{content:"+";color:var(--good)}.fr:before{content:"\2212";color:var(--bad)}
+tr.tr td{padding:17px 7px 5px;border:0}
+.trl{font:700 9.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--good);
+display:flex;align-items:center;gap:11px}
+.trl:after{content:"";flex:1;height:1px;background:var(--line2)}
+.hint{color:var(--dimmer);font-size:11.5px;font-family:var(--mono);margin-top:16px;line-height:1.75;letter-spacing:.03em}
+.key{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 3px 0 9px}
+.empty{padding:48px 8px;color:var(--dim);text-align:center}
+@media(max-width:1100px){.hide-m{display:none}}
+@media(max-width:780px){.hide-s{display:none}thead th{top:97px}td{padding:8px 4px;font-size:11.5px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.badge{display:inline-block;font:700 8.5px/1 var(--mono);letter-spacing:.1em;padding:3px 5px;
+ border-radius:2px;margin-left:8px;vertical-align:1px}
+.b-SLEEPER{background:var(--goodbg);color:var(--good);border:1px solid #B9DCCB}
+.b-VALUE{background:#EAF1F7;color:var(--info);border:1px solid #C3D8E8}
+.b-FADE{background:var(--badbg);color:var(--bad);border:1px solid #EFCABD}
+.mkn{display:inline-block;font:600 9px/1 var(--mono);letter-spacing:.06em;color:var(--warn);
+ margin-left:8px;vertical-align:1px}
+.mkw{display:block;font:9px/1.6 var(--mono);color:var(--dimmer);letter-spacing:.04em}
+tbody tr:hover{background:var(--row)}
+tbody tr.gone{opacity:.34}
+thead th{border-bottom:1px solid var(--line2)}
+.fitbar{background:var(--line)}
+
+.ibtn{display:inline-block;margin-left:4px;padding:3px 9px;font:600 10px/1 var(--mono);
+ letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line2);border-radius:11px;
+ background:var(--panel);color:var(--dim);cursor:pointer;vertical-align:1px}
+.ibtn:hover{color:var(--ink);border-color:var(--dim)}
+.ibtn[aria-expanded="true"]{background:var(--good);border-color:var(--good);color:#fff}
+.ipanel{margin:14px 0 0;max-width:78ch;background:var(--panel);border:1px solid var(--line);
+ border-radius:4px;padding:18px 22px 16px}
+.ipanel h3{margin:15px 0 5px;font:700 10px/1 var(--mono);letter-spacing:.16em;
+ text-transform:uppercase;color:var(--good)}
+.ipanel h3:first-child{margin-top:0}
+.ipanel p{margin:0;font-size:13px;line-height:1.6;color:var(--dim)}
+.ipanel b{color:var(--ink);font-weight:600}
+.ipanel .stamp{margin-top:15px;padding-top:11px;border-top:1px solid var(--line);
+ font:10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
+</style><script src="board-data.js"></script>
+</head><body>
+
+<header>
+<div class="kicker">12 teams · QB/2RB/2WR/TE/W-R-T/W-T/K/DST · half PPR · 0.75 per TE catch · 100 &amp; 200 yard bonuses</div>
+<h1>Projections, four expert boards, and <em>where the money went</em>.</h1>
+<p class="sub">Blended from a projection model rescored for your exact scoring, four public
+ranking systems, and the betting market. <button id="info" class="ibtn" aria-expanded="false"
+aria-controls="infopanel">How this works</button></p>
+<div id="infopanel" class="ipanel" hidden>
+<h3>What the rank is</h3>
+<p>Half projection model, half public consensus, nudged by the betting market. The model takes
+season projections and rescores them for this league: half PPR, <b>0.75 per catch for tight ends</b>
+(0.5 baseline plus your 0.25 premium), and yardage bonuses of <b>+3 at 100 yards and +2 more at
+200</b> (+3 at 300 and +2 at 400 passing). Those points are measured against replacement level for
+your 12-team roster — QB, 2RB, 2WR, TE, RB/WR/TE flex, WR/TE flex, K, DST — so value is
+scarcity-adjusted rather than raw points.</p>
+<h3>Why it isn't pure model</h3>
+<p>Every projection comes from a single source. Where that source is stingy, a pure model rank
+fought all four expert boards on one house's opinion. So each player's average public rank is
+converted back into points using the model's own value curve, and the two are averaged. The
+<b>Model</b> column shows the unblended view; the distance between it and the rank is how far the
+crowd pulled him.</p>
+<h3>The four systems</h3>
+<p>Sleeper and ESPN are ADP converted to a forced integer rank. FantasyPros is their <b>expert
+consensus (ECR)</b>, not their ADP — which is why Chase sits third rather than first — with their
+published tier in grey underneath. Flock is their published redraft order. Every system gives every
+player exactly one slot, so the spread plot is directly comparable across all four.</p>
+<h3>Market column</h3>
+<p>Free season-long props existed for only about 30 players. Where one exists, the score compares
+the book's line to the projection behind that player's rank. For everyone else it falls back to team
+win total, which is a team-strength proxy rather than an offence-specific one — so it carries about
+half the weight. Hover any market number to see the underlying line.</p>
+<h3>Tiers</h3>
+<p>Bands are drops in value, not even buckets. Viewing everyone shows overall tiers; filtering to a
+position switches the bands to that position's own tiers, which is what matters when you're deciding
+whether to take the last back in a tier or wait a round.</p>
+<h3>Known soft spots</h3>
+<p>The model doesn't simulate role changes, so a backup is valued at his projected volume rather
+than what he'd get if the starter went down — spend late picks on handcuffs regardless of what the
+board says. Deep bench players are smoothed across 17 games. And the board inherits its projection
+source's opinions; where you disagree, override it.</p>
+<p class="stamp" id="stamp">Data as of —</p>
+</div>
+</header>
+
+<div class="rail"><div class="railin">
+<div class="chips" id="posf">
+<button data-p="ALL" class="on">All</button><button data-p="QB">QB</button>
+<button data-p="RB">RB</button><button data-p="WR">WR</button>
+<button data-p="TE">TE</button><button data-p="FLEX">Flex</button></div>
+<input id="q" type="search" placeholder="find a player" aria-label="Find a player">
+<button id="hb">Hide drafted</button>
+<div class="spacer"></div>
+<div class="tally" id="tally"></div>
+<button id="rs" class="danger">Reset board</button>
+</div></div>
+
+<div class="wrap"><table><thead><tr>
+<th class="l" data-s="rk">#<span class="ar"></span></th>
+<th class="l" data-s="p">Player &amp; flags<span class="ar"></span></th>
+<th class="l" data-s="pos">Pos<span class="ar"></span></th>
+<th class="hide-s" data-s="bye">Bye<span class="ar"></span></th>
+<th class="grp" data-s="sl">Sleeper<span class="ar"></span></th>
+<th class="grp" data-s="es">ESPN<span class="ar"></span></th>
+<th class="grp" data-s="fpr">FPros<span class="ar"></span></th>
+<th class="grp" data-s="fkr">Flock<span class="ar"></span></th>
+<th data-s="avg">Avg<span class="ar"></span></th>
+<th class="hide-m" data-s="spread">Where they land<span class="ar"></span></th>
+<th class="hide-s" data-s="model">Model<span class="ar"></span></th>
+<th data-s="gap">Gap<span class="ar"></span></th>
+<th data-s="mkt">Market<span class="ar"></span></th>
+<th data-s="fit">Scoring fit<span class="ar"></span></th>
+</tr></thead><tbody id="rows"></tbody></table>
+<p class="hint">
+Sleeper / ESPN / FPros / Flock = each system's rank, forced to one slot per player. FPros is expert
+consensus with their tier in grey underneath. Avg = mean of the four (NR excluded).
+Where they land = each system plotted against their average, window &plusmn;40 slots<span class="key d-sl"></span>Sleeper<span class="key d-es"></span>ESPN<span class="key d-fp"></span>FPros<span class="key d-fk"></span>Flock. A wide plot means nobody agrees, which is where the value hides.<br>
+Model = where the projection model alone puts him; the difference between Model and the blended rank
+shows how far the crowd pulled him. Gap = average public rank minus the blended rank; positive means
+the room should let him fall to you.<br>
+Market (&minus;10 to +10) = where the betting money
+sits. If a season-long prop exists for that player, it compares the book's line to the projection
+behind his rank; otherwise it falls back to his team's win total. Hover the number for the
+underlying line.<br>
+Badges: <b>SLEEPER</b> = going 25+ slots later on Sleeper than he ranks here, outside the top 75.
+<b>VALUE</b> = 18+ slots of edge on the public average. <b>FADE</b> = 18+ slots the other way.<br>
+Scoring fit (&minus;10 to +10) = how much this league's quirks change a player's value versus a plain half-PPR league. Driven by how often he posts 100-yard games, the extra 0.25 per TE catch, and the fact that six bench spots make injury-contingent stashes expensive.<br>
+Tiers are drops in value over replacement, not even buckets. Positional tier is under the position chip.
+</p></div>
+
+<script>
+const DATA = window.BOARD_DATA || [];
+const S={pos:"ALL",q:"",sort:"rk",dir:1,hide:false,gone:new Set()};
+const KEY="hp_board_v6";
+// window.storage exists inside Claude; localStorage is the fallback when this
+// file is opened straight off disk. Try both so draft state survives either way.
+async function load(){
+  let raw=null;
+  try{ if(window.storage){const r=await window.storage.get(KEY); if(r&&r.value) raw=r.value;} }catch(e){}
+  if(raw===null){ try{ raw=localStorage.getItem(KEY); }catch(e){} }
+  if(raw){ try{ S.gone=new Set(JSON.parse(raw)); }catch(e){} }
+  render();
+}
+async function save(){
+  const v=JSON.stringify([...S.gone]);
+  try{ if(window.storage) await window.storage.set(KEY,v); }catch(e){}
+  try{ localStorage.setItem(KEY,v); }catch(e){}
+}
+const i0=v=>v==null?"—":Math.round(v);
+const n1=v=>v==null?"—":(Math.round(v*10)/10).toFixed(1);
+function dots(x){const W=40,c=x.avg,pos=v=>Math.max(2,Math.min(98,50+((v-c)/W)*50));
+let h=`<div class="spread"><div class="axis"></div><div class="mid"></div>`;
+if(x.sl!=null)h+=`<b class="d-sl" style="left:${pos(x.sl)}%"></b>`;
+if(x.es!=null)h+=`<b class="d-es" style="left:${pos(x.es)}%"></b>`;
+if(x.fpr!=null)h+=`<b class="d-fp" style="left:${pos(x.fpr)}%"></b>`;
+if(x.fkr!=null)h+=`<b class="d-fk" style="left:${pos(x.fkr)}%"></b>`;
+return h+`</div><span class="spnum">${x.spread?("\u00b1"+x.spread):"tight"}</span>`;}
+function mktCell(x){
+ if(x.mkt==null)return `<span class="flat">—</span>`;
+ const w=Math.abs(x.mkt)/10*32, col=x.mkt>0?"var(--good)":"var(--bad)";
+ const st=x.mkt>0?`left:50%;width:${w}px`:`right:50%;width:${w}px`;
+ const c=x.mkt>=4?"up":x.mkt<=-4?"dn":"flat";
+ const t=x.prop?`${x.prop} · proj ${x.propdelta>0?"+":""}${x.propdelta}%`:`win total ${x.win}`;
+ return `<span class="fitn ${c}" title="${t}">${x.mkt>0?"+":""}${x.mkt}</span>
+  <div class="fitbar"><div class="z"></div><i style="${st};background:${col}"></i></div>
+  <span class="mkw">${x.prop?"prop":"win "+x.win}</span>`;}
+function fitCell(x){
+ if(x.fit==null)return `<span class="flat">—</span>`;
+ const w=Math.abs(x.fit)/10*32, col=x.fit>0?"var(--good)":"var(--bad)";
+ const st=x.fit>0?`left:50%;width:${w}px`:`right:50%;width:${w}px`;
+ const c=x.fit>=4?"up":x.fit<=-4?"dn":"flat";
+ return `<span class="fitn ${c}">${x.fit>0?"+":""}${x.fit}</span>
+  <div class="fitbar"><div class="z"></div><i style="${st};background:${col}"></i></div>`;}
+function visible(){
+ let out=DATA.filter(x=>{
+  if(S.pos==="FLEX"){if(!["RB","WR","TE"].includes(x.pos))return false;}
+  else if(S.pos!=="ALL"&&x.pos!==S.pos)return false;
+  if(S.hide&&S.gone.has(x.rk))return false;
+  if(S.q&&!(x.p+" "+x.tm).toLowerCase().includes(S.q))return false;
+  return true;});
+ const k=S.sort;
+ out.sort((a,b)=>{let av=a[k],bv=b[k];
+  if(av==null)av=S.dir===1?1e9:-1e9; if(bv==null)bv=S.dir===1?1e9:-1e9;
+  if(typeof av==="string")return S.dir*av.localeCompare(bv);
+  return S.dir*(av-bv);});
+ return out;}
+function render(){
+ const list=visible();let h="",tier=null;
+ const single=["QB","RB","WR","TE"].includes(S.pos);
+ const bands=(S.sort==="rk"&&S.dir===1&&!S.q&&(S.pos==="ALL"||single));
+ const tkey=single?"ptier":"otier";
+ for(const x of list){
+  if(bands&&x[tkey]!==tier){tier=x[tkey];
+   const lbl=tier?((single?S.pos+" tier ":"Tier ")+tier):"Unprojected";
+   h+=`<tr class="tr"><td colspan="14"><div class="trl">${lbl}</div></td></tr>`;}
+  const d=S.gone.has(x.rk);
+  const gC=x.gap==null?"flat":x.gap>=12?"up":x.gap<=-12?"dn":"flat";
+  const gV=x.gap==null?"—":(x.gap>0?"+":"")+x.gap;
+  h+=`<tr class="${d?"gone":""}" data-rk="${x.rk}">
+   <td class="l rk">${x.rk}</td>
+   <td class="l"><span class="nm">${x.p}</span><span class="tm">${x.tm}</span>${
+   x.tag2?`<span class="badge b-${x.tag2}">${x.tag2}</span>`:""}${
+   x.mktnote?`<span class="mkn">${x.mktnote}</span>`:""}
+    <div class="flags"><div class="flag fg">${x.g}</div><div class="flag fr">${x.r}</div></div></td>
+   <td class="l"><span class="pill ${x.pos}">${x.pos}</span>
+    <span class="ptier">${x.ptier?(x.pos+" t"+x.ptier):"&nbsp;"}</span></td>
+   <td class="hide-s flat">${x.bye||"—"}</td>
+   <td class="site">${i0(x.sl)}</td>
+   <td class="site">${x.es==null?'<span class="flat">NR</span>':i0(x.es)}</td>
+   <td class="site">${x.fpr==null?'<span class="flat">NR</span>':i0(x.fpr)}${x.fpt?`<span class="ptier">FP t${x.fpt}</span>`:""}</td>
+   <td class="site">${x.fkr==null?'<span class="flat">NR</span>':i0(x.fkr)}</td>
+   <td class="avg">${n1(x.avg)}</td>
+   <td class="hide-m">${dots(x)}</td>
+   <td class="hide-s flat">${x.model==null?"—":x.model}</td>
+   <td class="${gC}">${gV}</td>
+   <td class="fit">${mktCell(x)}</td>
+   <td class="fit">${fitCell(x)}</td></tr>`;}
+ document.getElementById("rows").innerHTML=h||`<tr><td colspan="14" class="empty">Nobody left matching that.</td></tr>`;
+ const left=p=>DATA.filter(x=>x.pos===p&&!S.gone.has(x.rk)).length;
+ document.getElementById("tally").innerHTML=`<b>${S.gone.size}</b> drafted · left: `+
+  ["QB","RB","WR","TE"].map(p=>`${p} <b>${left(p)}</b>`).join(" · ");}
+document.getElementById("rows").addEventListener("click",e=>{
+ const tr=e.target.closest("tr[data-rk]");if(!tr)return;const rk=+tr.dataset.rk;
+ S.gone.has(rk)?S.gone.delete(rk):S.gone.add(rk);save();render();});
+document.getElementById("posf").addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;S.pos=b.dataset.p;
+ [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));render();});
+document.querySelectorAll("thead th").forEach(th=>{th.addEventListener("click",()=>{
+ const k=th.dataset.s;
+ if(S.sort===k)S.dir*=-1;else{S.sort=k;S.dir=["spread","gap","fit"].includes(k)?-1:1;}
+ document.querySelectorAll("thead th").forEach(o=>{o.classList.toggle("sorted",o===th);
+  o.querySelector(".ar").textContent=o===th?(S.dir===1?" ▲":" ▼"):"";});render();});});
+document.getElementById("q").addEventListener("input",e=>{S.q=e.target.value.trim().toLowerCase();render();});
+document.getElementById("hb").addEventListener("click",e=>{S.hide=!S.hide;
+ e.target.classList.toggle("on",S.hide);e.target.textContent=S.hide?"Show everyone":"Hide drafted";render();});
+document.getElementById("rs").addEventListener("click",()=>{S.gone.clear();S.hide=false;
+ const b=document.getElementById("hb");b.classList.remove("on");b.textContent="Hide drafted";save();render();});
+document.getElementById("info").addEventListener("click",e=>{
+ const p=document.getElementById("infopanel"), open=p.hasAttribute("hidden");
+ open?p.removeAttribute("hidden"):p.setAttribute("hidden","");
+ e.target.setAttribute("aria-expanded",open?"true":"false");
+ e.target.textContent=open?"Hide":"How this works";});
+(function(){
+  const m = window.BOARD_META || {};
+  const s = document.getElementById("stamp");
+  if(s && m.generated) s.textContent = "Data as of " + m.generated;
+  if(!window.BOARD_DATA){
+    document.getElementById("rows").innerHTML =
+      '<tr><td colspan="14" class="empty">board-data.js not found \u2014 it must sit in the same folder as this file.</td></tr>';
+  }
+})();
+load();
+</script></body></html>
