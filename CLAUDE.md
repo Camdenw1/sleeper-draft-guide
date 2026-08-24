@@ -53,6 +53,16 @@ pick 50. Camden confirmed on 24 Aug 2026 that this is a league setup error being
 fixed, so score.py models normal kicker scoring instead. **Don't "correct" it back
 to match the page** without asking -- that mismatch is deliberate.
 
+## Draft-reality overrides — deliberate, don't "fix" them
+
+- **K and DST are floored** (`FLOOR` in blend.py, enforced by order in board.py):
+  no DST before pick 120, no K before pick 140. Their VOR is real but not
+  actionable — one starter each, both streamable, neither predictable. Unfloored,
+  a defense sorted to pick 71.
+- The **Value coming up** panel caps at two per position and only shows players in
+  range of the next pick. Uncapped it is entirely tight ends, because the 0.75
+  premium means every TE beats public ADP. True, but not a draft strategy.
+
 ## Known limitations — worth stating rather than papering over
 
 - No role-change modelling. A backup is valued at projected volume, not the volume

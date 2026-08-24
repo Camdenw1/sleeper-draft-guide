@@ -35,9 +35,23 @@ for x in rows:
 curve2=sorted([x["blend"] for x in rows], reverse=True)
 span=(curve2[0]-curve2[-1]) or 1
 for x in rows:
+    if x["pos"] in ("K","DST"):
+        # a good team's win total should not drag a defense back up the board;
+        # blend.py already pinned these to the endgame on purpose
+        x["final"]=x["blend"]; continue
     w = 0.13 if x["prop"] else 0.06
     x["final"]=round(x["blend"] + w*(x["mkt"]/10.0)*span*0.35,1)
 rows.sort(key=lambda z:-z["final"])
+# Hard floor on draft position. Pinning their VALUE to public consensus was not
+# enough -- the value curve is so flat this deep that a defense still surfaced
+# around pick 105. So place them by ORDER instead: skill players fill the board,
+# then K and DST are slotted in no earlier than FLOOR (see blend.py).
+_skill=[x for x in rows if x["pos"] not in FLOOR]
+_late={p:[x for x in rows if x["pos"]==p] for p in FLOOR}
+rows=list(_skill)
+for pos in sorted(FLOOR, key=lambda p: FLOOR[p]):
+    for i,x in enumerate(_late[pos]):
+        rows.insert(min(len(rows), FLOOR[pos]-1+i), x)
 for i,x in enumerate(rows): x["rk"]=i+1
 for x in rows: x["gap"]=round(x["avg"]-x["rk"])
 

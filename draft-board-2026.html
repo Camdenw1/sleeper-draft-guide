@@ -154,6 +154,7 @@ border-radius:2px;padding:6px 8px;color:var(--ink);width:74px}
 #sync.on{background:var(--good);border-color:var(--good);color:#fff}
 .syncst{font:10px/1 var(--mono);color:var(--dimmer);letter-spacing:.05em}
 .nplab{font:10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
+.rise{color:var(--bad);font-weight:700}
 .trend{display:inline-block;margin-left:5px;font:600 9px/1 var(--mono);letter-spacing:.06em;
 color:var(--bad);border:1px solid var(--badbg);background:var(--badbg);border-radius:2px;padding:2px 4px}
 .pill.K{background:var(--k);color:var(--ki)}
@@ -225,7 +226,7 @@ source's opinions; where you disagree, override it.</p>
 <div class="decks">
  <div class="deck"><h4>Best available <span id="ba-note"></span></h4>
   <div class="ba" id="bestavail"></div></div>
- <div class="deck"><h4>Value on the board <span>board rank vs the room</span></h4>
+ <div class="deck"><h4>Value coming up <span id="v-note">2 per position · ↑ rising</span></h4>
   <div class="ba" id="values"></div></div>
  <div class="deck"><h4>My team <span id="mt-note"></span></h4>
   <div class="slots" id="myteam"></div></div>
@@ -267,6 +268,8 @@ Tiers are drops in value over replacement, not even buckets. Positional tier is 
 
 <script>
 const DATA = window.BOARD_DATA || [];
+// half the board's busiest trending player -- see hot() in renderDecks
+const HOTCUT = Math.max(1,...DATA.map(x=>x.trend||0))*0.5;
 const S={pos:"ALL",q:"",sort:"rk",dir:1,hide:false,gone:new Set(),mine:new Set(),np:null};
 const KEY="hp_board_v7";
 const OLDKEY="hp_board_v6";   // v6 stored a bare array of drafted ranks
@@ -374,16 +377,33 @@ function renderDecks(){
 
  // Value: biggest positive gap between where the room has him and where we do.
  // Restricted to players plausibly reachable, so it stays actionable.
- const cut=S.np?S.np+24:9999;
- // K and DST are excluded here: this league's kicker scoring puts them far above
- // public ADP by construction, so they would fill the whole panel and drown out
- // the skill-position reads. They still rank honestly on the board itself.
- const vals=av.filter(x=>["QB","RB","WR","TE"].includes(x.pos)
-              &&x.gap!=null&&x.gap>=8&&(x.adp==null||x.adp<=cut))
-              .sort((a,b)=>b.gap-a.gap).slice(0,7);
+// Trending is rescaled against the busiest player ON THIS BOARD. The raw feed is
+ // dominated by waiver adds for players we don't carry, which squashed everyone
+ // else to nearly zero and made the signal useless.
+ const TMAX=Math.max(1,...DATA.map(x=>x.trend||0));
+ const hot=x=>x.trend?x.trend/TMAX:0;
+ // "Coming up": players actually in play at your next pick. A +37 edge on someone
+ // going 90 picks from now is not a decision you get to make; this panel is for
+ // the ones you can act on. Falls back to the whole board until you set a pick.
+ const near=x=>S.np==null?true:(x.adp!=null&&x.adp>=S.np-8&&x.adp<=S.np+30);
+ // Capped at two per position. Without the cap this is just a tight-end list --
+ // the 0.75/catch premium means every TE beats public ADP, which is true but not
+ // a reason to draft eight of them. K and DST are excluded; they are floored to
+ // the endgame on purpose.
+ const CAPPOS=2;
+ const scored=av.filter(x=>["QB","RB","WR","TE"].includes(x.pos)
+              &&x.gap!=null&&x.gap>=6&&near(x))
+              .map(x=>({x,s:x.gap+hot(x)*8}))
+              .sort((a,b)=>b.s-a.s);
+ const seenPos={}; const vals=[];
+ for(const o of scored){
+  const q=seenPos[o.x.pos]||0;
+  if(q>=CAPPOS)continue;
+  seenPos[o.x.pos]=q+1; vals.push(o.x);
+  if(vals.length>=8)break;}
  document.getElementById("values").innerHTML=
-  vals.map(x=>row(x,`#${x.rk} <b>+${x.gap}</b>`)).join("")
-  ||'<div class="r dim">Nothing stands out right now.</div>';
+  vals.map(x=>row(x,`#${x.rk} <b>+${x.gap}</b>`+(hot(x)>=0.5?' <span class="rise">\u2191</span>':""))).join("")
+  ||'<div class="r dim">'+(S.np?"Nothing in range of pick "+S.np+".":"Nothing stands out right now.")+'</div>';
 
  // My team: greedy fill, dedicated slots first, then flex, then bench.
  const mine=DATA.filter(x=>S.mine.has(x.rk)).sort((a,b)=>a.rk-b.rk);
@@ -490,7 +510,7 @@ function render(){
    <td class="l rk">${x.rk}</td>
    <td class="l"><span class="nm">${x.p}</span><span class="tm">${x.tm}</span><button class="mine-btn" data-mine="${x.rk}" title="I drafted him">+</button>${
    x.tag2?`<span class="badge b-${x.tag2}">${x.tag2}</span>`:""}${
-   x.mktnote?`<span class="mkn">${x.mktnote}</span>`:""}${x.trend>=55?`<span class="trend">HOT</span>`:""}
+   x.mktnote?`<span class="mkn">${x.mktnote}</span>`:""}${x.trend!=null&&x.trend>=HOTCUT?`<span class="trend">HOT</span>`:""}
     <div class="flags"><div class="flag fg">${x.g}</div><div class="flag fr">${x.r}</div></div></td>
    <td class="l"><span class="pill ${x.pos}">${x.pos}</span>
     <span class="ptier">${x.ptier?(x.pos+" t"+x.ptier):"&nbsp;"}</span></td>

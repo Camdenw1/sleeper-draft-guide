@@ -82,10 +82,27 @@ def market(rank):
     i=int(round(rank))-1
     return curve[max(0,min(len(curve)-1,i))]
 W=0.50                       # half model, half market
+# K and DST are the exception. Their VOR edge is real on paper -- the best defense
+# really is ~38 points better than a replacement one -- but it is not actionable:
+# both are streamable off waivers, both have week-to-week variance that swamps the
+# projection, and neither is remotely predictable year over year. The room's
+# TIMING is right and the model's is not, so weight them almost entirely to market
+# and let them fall to the rounds where they are actually drafted.
+# Earliest slot a K or DST is allowed to appear. You start exactly one of each,
+# both are streamable off waivers all season, and neither is predictable year over
+# year -- so capital spent on them before the endgame is capital wasted regardless
+# of what VOR says. The model's opinion is still visible in the Model column.
+FLOOR={"DST":120, "K":140}
 for x in rows:
     mv=market(x["avg"])
     x["mktvor"]=round(mv,1)
-    x["blend"]=round(W*x["vor"]+(1-W)*mv,1) if x["vor"] is not None else round(mv,1)
+    if x["pos"] in FLOOR:
+        # pinned to the later of public consensus and the floor -- no model pull
+        x["blend"]=round(market(max(x["avg"], FLOOR[x["pos"]])),1)
+    elif x["vor"] is not None:
+        x["blend"]=round(W*x["vor"]+(1-W)*mv,1)
+    else:
+        x["blend"]=round(mv,1)
 rows.sort(key=lambda z:-z["blend"])
 for i,x in enumerate(rows): x["rk"]=i+1
 for x in rows: x["gap"]=round(x["avg"]-x["rk"])

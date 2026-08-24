@@ -23,8 +23,10 @@ Filter by position to switch the tier bands from overall to positional.
 Three panels sit above the board:
 
 - **Best available** — top of the board plus the best man left at every position
-- **Value on the board** — where your rank most disagrees with the room, skill
-  positions only (K and DST are excluded there; see below)
+- **Value coming up** — where your rank most disagrees with the room, limited to
+  players actually in range of your next pick and capped at two per position. A
+  +37 edge on someone going 90 picks from now isn't a decision you get to make,
+  and without the position cap the TE premium turns this into a tight-end list.
 - **My team** — your picks slotted into the real roster, with a bye-week clash warning
 
 Type your **next pick** number and the *Lasts* column fills in: the chance each
@@ -68,6 +70,16 @@ still works if someone's API is down or the wifi isn't cooperating.
 
 Badges: **SLEEPER** = 25+ slots later on Sleeper than he ranks here, outside the
 top 75. **VALUE** = 18+ slots of edge. **FADE** = 18+ the other way.
+
+### Kickers and defenses
+
+They're in the pool and scored properly, but they are **floored to the endgame** —
+no DST before pick 120, no K before pick 140. Their value-over-replacement is real
+on paper (the best defense really is ~38 points better than a replacement one) but
+it isn't actionable: you start exactly one of each, both are streamable off waivers
+all season, and neither is predictable year to year. Left alone, VOR floated a
+defense to pick 71, which is not a pick anyone should make. The model's raw opinion
+is still visible in the *Model* column.
 
 Full methodology is behind the "How this works" button on the board itself.
 
