@@ -75,8 +75,10 @@ Only the delta. Don't restate the board.
 
 - **Scoring:** half PPR · 0.75 per catch for TE · INT -2 · yardage bonuses are
   EXCLUSIVE tiers: +3 for 100-199 rush/rec and +4 for 200+; +3 for 300-399 pass
-  and +4 for 400+ · kickers by distance (1-6 by bucket plus 0.10/yard) · DST
-  points-allowed tiers · fumbles and 2-pt conversions not modelled (no data)
+  and +4 for 400+ · kickers use NORMAL scoring (3 under 40, 4 from 40-49, 5 from
+  50+, PAT 1, miss -1) -- the 0.10/yard bonus on the league page is a setup error
+  being fixed, see CLAUDE.md · DST points-allowed tiers · fumbles and 2-pt
+  conversions not modelled (no data)
 - **Roster:** 12 teams — QB, 2RB, 2WR, TE, RB/WR/TE flex, WR/TE flex, K, DST, 6 bench
 - **Blend** (`refresh/board.py`): 50% projection model, 50% public consensus, then a
   market nudge — 13% weight where a real prop exists, 6% where it's only a win total

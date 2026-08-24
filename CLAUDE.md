@@ -38,15 +38,20 @@ paywalled rankings; `sources.py` is the place to add a new free one.
 
 Half PPR · **0.75 per catch for TE** (0.5 baseline + 0.25 premium) · INT **-2** ·
 yardage bonuses are **exclusive tiers**: **+3 for 100-199 rush/rec, +4 for 200+**;
-+3 for 300-399 pass, +4 for 400+ · kickers scored **by distance**, 1-6 by bucket
-**plus 0.10/yard** (a 45-yarder is 8.5, so kickers project ~300 and rank far above
-every public board -- this is the biggest single edge on the board) · DST
++3 for 300-399 pass, +4 for 400+ · kickers use **normal** fantasy scoring (3 under
+40, 4 from 40-49, 5 from 50+, PAT 1, miss -1) · DST
 points-allowed tiers 0 / 1-6 / 7-13 / 14-20 / 21-27 / 28-34 / 35+ pay
 +10 / +7 / +4 / +1 / 0 / -1 / -4 · 12 teams · QB, 2RB, 2WR, TE, RB/WR/TE flex,
 WR/TE flex, K, DST, 6 bench.
 
 Verified against the league's scoring page on 24 Aug 2026. Fumble lost (-2) and
 2-pt conversions are NOT modelled -- players.py carries no fumble or 2-pt data.
+
+The scoring page currently shows kicker FG buckets of 1/2/3/4/5/6 plus a 0.10
+per-yard bonus, which would make a 45-yarder worth 8.5 and put a kicker around
+pick 50. Camden confirmed on 24 Aug 2026 that this is a league setup error being
+fixed, so score.py models normal kicker scoring instead. **Don't "correct" it back
+to match the page** without asking -- that mismatch is deliberate.
 
 ## Known limitations — worth stating rather than papering over
 

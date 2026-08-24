@@ -75,17 +75,6 @@ Full methodology is behind the "How this works" button on the board itself.
 
 Aug 28 and Sept 8. Draft is Sept 9.
 
-## The kicker thing
-
-This league scores field goals by distance — 1 to 6 points by bucket *plus* 0.10
-per yard — so a 45-yarder is worth 8.5 and a good kicker projects around 300
-points. Every public board treats kickers as interchangeable last-round filler,
-because in a normal league they are. Here they aren't: the gap between the best
-kicker and a replacement one is worth roughly as much as the gap between the best
-tight end and the twelfth. The board ranks them honestly, which is why a kicker
-shows up around pick 50 — but check the *Lasts* column before reaching, because
-ADP says you can usually still wait.
-
 ## Data sources
 
 All rankings come from free, public, no-auth endpoints, fetched at build time by

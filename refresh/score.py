@@ -35,16 +35,21 @@ QBINT = {"Josh Allen":9,"Drake Maye":9,"Lamar Jackson":8,"Jayden Daniels":11,"Ja
  "Fernando Mendoza":10}
 
 # ------------------------------------------------------------------ kicker ---
-# Made-FG distance mix for a league-average leg, and the points each bucket pays
-# under this league (bucket value + 0.10/yard at the bucket's midpoint).
-FG_MID = np.array([17., 25., 35., 45., 55., 62.])
-FG_BUCKET = np.array([1., 2., 3., 4., 5., 6.])
-FG_BASE_P = np.array([.02, .22, .27, .27, .19, .03])
-FG_VALUE = FG_BUCKET + 0.10 * FG_MID          # -> [2.7, 4.5, 6.5, 8.5, 10.5, 12.2]
+# Standard fantasy kicker scoring: 3 under 40, 4 from 40-49, 5 from 50+, PAT 1,
+# missed FG -1. The league's scoring page currently also shows a 0.10/yard bonus
+# and 1/2/3 buckets under 40, which would make a 45-yarder worth 8.5 and push
+# kickers into the top 60. Camden confirmed that is a setup error being fixed, so
+# normal scoring is what is modelled here.
+FG_BASE_P = np.array([.02, .22, .27, .27, .19, .03])   # made-FG distance mix
+FG_VALUE  = np.array([3., 3., 3., 4., 5., 5.])         # 0-19 20-29 30-39 40-49 50-59 60+
 
 
 def fg_ev(leg):
-    """Expected points per made FG, tilting the distance mix by leg strength."""
+    """Expected points per made FG, tilting the distance mix by leg strength.
+
+    A big-leg kicker attempts more long field goals, so he earns slightly more per
+    make even under flat-ish scoring. That is the only thing `leg` buys now.
+    """
     z = np.arange(6) - 2.5
     w = FG_BASE_P * np.exp(0.45 * (leg - 1.0) * z / 2.5)
     w = w / w.sum()
