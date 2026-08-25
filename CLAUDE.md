@@ -22,13 +22,13 @@ refreshes never clobber UI work, and UI work never has to touch the pipeline.
 2. `fit.py` → Monte Carlo (40k games/player) for the 100/200-yard bonuses, since a
    bonus is a step function and E[bonus] ≠ bonus(E[yards])
 3. `board.py` (which execs `blend.py`) → VOR against endogenous replacement level,
-   blends model with public consensus, applies the market layer, assigns tiers and tags
+   blends model with public consensus, assigns tiers and tags
 
 Data modules: `players.py` (projections + availability), `hp_data.py` (player pool
 + hand-written green/red flags), `sources.py` (fetches three free public **ADP**
 feeds live — FFC half-PPR 12-team, ESPN, Yahoo — cached 6h, falls back to cache
 per-source on failure), `ranks.py` (normalizes those into joinable columns),
-`market.py` (win totals, props, award odds).
+`market.py` (award odds only — see below).
 
 The paid sources this project started with — FantasyPros ECR and a Flock Fantasy
 export — were removed when the repo went public. Don't reintroduce paid or
@@ -98,6 +98,17 @@ Two sources were tested and rejected. Don't re-add either without new evidence:
   MFL's QBs ran 38 slots earlier (Josh Allen 3rd overall vs FFC's 33rd) while RBs
   and WRs ran 7 and 20 later. `IS_PPR` filters scoring, not roster format.
   `fetch_mfl` is kept in sources.py, unused, recording exactly this.
+
+## Removed on purpose — don't restore without asking
+
+- **The betting layer.** Win totals and season props used to nudge the final sort.
+  Measured on this board it moved skill players a mean of **1.8 slots** (max 11),
+  which did not justify a column or the explanation it needed. `market.py` still
+  holds `WIN` and `PROPS` if it is ever wanted back; only `AWARDS` is used now,
+  for the small odds badge next to a name.
+- **The "scoring fit" column.** It was **display-only** — it never entered the
+  ranking. The league's quirks are already priced into `tot` through the yardage
+  bonuses and the TE premium, so the column was decoration.
 
 ## Known limitations — worth stating rather than papering over
 

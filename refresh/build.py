@@ -24,13 +24,11 @@ with open(ROOT / "rankings.csv", "w", newline="") as f:
     w = csv.writer(f)
     w.writerow(["Rank","OverallTier","Pos","PosTier","Player","Team","Bye","Tag",
       "FFCHalfPPR","FantasyCalc","ESPNadp","YahooADP","NumSources","AvgPublic","Spread",
-      "ModelRank","Gap","Market","PropLine","ProjVsLinePct","TeamWinTotal","AwardOdds",
-      "ScoringFit","LeaguePts","YardBonusPts","Injury","InjuryBody","GreenFlag","RedFlag"])
+      "ModelRank","Gap","AwardOdds","LeaguePts","YardBonusPts","Injury","InjuryBody","GreenFlag","RedFlag"])
     for x in rows:
         w.writerow([x["rk"],x["otier"],x["pos"],x["ptier"],x["p"],x["tm"],x["bye"],x["tag2"],
           N(x["ffcr"]),N(x["fcalcr"]),N(x["espnr"]),N(x["yahoor"]),x["nsrc"],
           x["avg"],x["spread"],
-          N(x["model"]),x["gap"],x["mkt"],N(x["prop"]),N(x["propdelta"]),x["win"],x["mktnote"],
-          N(x["fit"]),round(x["tot"],1) if x["tot"] else "",x["bonus"],N(x["inj"]),N(x["injbody"]),x["g"],x["r"]])
+          N(x["model"]),x["gap"],x["mktnote"],round(x["tot"],1) if x["tot"] else "",x["bonus"],N(x["inj"]),N(x["injbody"]),x["g"],x["r"]])
 
 print(f"\nboard-data.js + rankings.csv — {len(rows)} players, stamped {stamp}")

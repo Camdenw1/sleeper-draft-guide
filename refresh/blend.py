@@ -62,14 +62,9 @@ for x in rows: x.setdefault("model",None)
 
 TIERS_LATER=True
 
-sh=[x["quirk"]/x["tot"] for x in rows if x["tot"] and x["pos"] in ("QB","RB","WR","TE")]
-mu,sd=float(np.mean(sh)),float(np.std(sh))
-for x in rows:
-    if not x["tot"] or x["pos"] in ("K","DST"): x["fit"]=None; continue
-    f=np.clip((x["quirk"]/x["tot"]-mu)/sd*3.4,-10,10)
-    if x["av"]<1.0: f-=(1.0-x["av"])*22
-    if x["tot"]<70: f-=1.5
-    x["fit"]=int(round(float(np.clip(f,-10,10))))
+# The old "scoring fit" score lived here. It was display-only -- it never touched
+# the ranking -- and the league's quirks are already priced into `tot` via the
+# yardage bonuses and the TE premium. Removed rather than kept as decoration.
 
 # The four sources do not deserve equal say.
 #   ffc     REAL half-PPR 12-team ADP from thousands of actual drafts. The only
@@ -149,13 +144,12 @@ if _stale:
     print("   -> fix avail in players.py, or accept and move on.")
 
 json.dump(rows,open("blend_out.json","w"))
-def _f(v,w=3): return f"{v:+{w}}" if v is not None else " "*(w-2)+"NA"
 print("replacement:",{k:round(v) for k,v in REPL.items()})
-print("\nRK T  POS   PLAYER                FFC  FC ESPN   YH  AVG  GAP FIT")
+print("\nRK T  POS   PLAYER                FFC  FC ESPN   YH  AVG  GAP")
 for x in rows[:26]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']:<3} {x['p']:22} "
           f"{str(x['ffcr']):>3} {str(x['fcalcr']):>3} {str(x['espnr']):>4} "
-          f"{str(x['yahoor']):>4} {x['avg']:5} {x['gap']:+4} {_f(x['fit'])}")
+          f"{str(x['yahoor']):>4} {x['avg']:5} {x['gap']:+4}")
 print("\nBIGGEST FOUR-SYSTEM DISAGREEMENTS")
 for x in sorted(rows,key=lambda z:-z["spread"])[:12]:
     print(f"  {x['p']:22} FFC {str(x['ffcr']):>3} ESPN {str(x['espnr']):>3} "

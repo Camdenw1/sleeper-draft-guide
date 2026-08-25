@@ -170,13 +170,13 @@ color:var(--bad);border:1px solid var(--badbg);background:var(--badbg);border-ra
 
 <header>
 <div class="kicker">12 teams · QB/2RB/2WR/TE/W-R-T/W-T/K/DST · half PPR · 0.75 per TE catch · 100 &amp; 200 yard bonuses</div>
-<h1>Projections, four public boards, and <em>where the money went</em>.</h1>
+<h1>Projections, four public boards, and <em>where they disagree</em>.</h1>
 <p class="sub">Blended from a projection model rescored for your exact scoring, four public
-half-PPR sources, live injuries, and the betting market. <button id="info" class="ibtn" aria-expanded="false"
+half-PPR sources, and live injuries. <button id="info" class="ibtn" aria-expanded="false"
 aria-controls="infopanel">How this works</button></p>
 <div id="infopanel" class="ipanel" hidden>
 <h3>What the rank is</h3>
-<p>Half projection model, half public consensus, nudged by the betting market. The model takes
+<p>Half projection model, half public consensus. The model takes
 season projections and rescores them for this league: half PPR, <b>0.75 per catch for tight ends</b>
 (0.5 baseline plus your 0.25 premium), interceptions at <b>&minus;2</b>, and yardage bonuses of
 <b>+3 for a 100&ndash;199 yard game and +4 for 200+</b> (+3 at 300&ndash;399 and +4 at 400+ passing).
@@ -186,7 +186,7 @@ replacement level for your 12-team roster — QB, 2RB, 2WR, TE, RB/WR/TE flex, W
 value is scarcity-adjusted rather than raw points.</p>
 <h3>Why it isn't pure model</h3>
 <p>Every projection comes from a single source. Where that source is stingy, a pure model rank
-fought all four public boards on one house's opinion. So each player's average public rank is
+fought all four public boards on one source's opinion. So each player's average public rank is
 converted back into points using the model's own value curve, and the two are averaged. The
 <b>Model</b> column shows the unblended view; the distance between it and the rank is how far the
 crowd pulled him.</p>
@@ -199,11 +199,6 @@ format, which is why it anchors the blend. <b>FCalc</b> is FantasyCalc's market 
 it is an independent read on the same question. ESPN and Yahoo are real ADP from their own drafts.
 Every system gives every
 player exactly one slot, so the spread plot is directly comparable across all four.</p>
-<h3>Market column</h3>
-<p>Free season-long props existed for only about 30 players. Where one exists, the score compares
-the book's line to the projection behind that player's rank. For everyone else it falls back to team
-win total, which is a team-strength proxy rather than an offence-specific one — so it carries about
-half the weight. Hover any market number to see the underlying line.</p>
 <h3>Tiers</h3>
 <p>Bands are drops in value, not even buckets. Viewing everyone shows overall tiers; filtering to a
 position switches the bands to that position's own tiers, which is what matters when you're deciding
@@ -253,10 +248,8 @@ source's opinions; where you disagree, override it.</p>
 <th class="grp" data-s="yahoor" title="Yahoo average pick. Yahoo's default league scoring is 0.5 per reception.">Yahoo<span class="ar"></span></th>
 <th data-s="avg">Avg<span class="ar"></span></th>
 <th class="hide-m" data-s="spread">Where they land<span class="ar"></span></th>
-<th class="hide-s" data-s="model">Model<span class="ar"></span></th>
-<th data-s="gap">Gap<span class="ar"></span></th>
-<th data-s="mkt">Market<span class="ar"></span></th>
-<th data-s="fit">Scoring fit<span class="ar"></span></th>
+<th class="hide-s" data-s="model" title="Where the projection alone ranks him, ignoring every public board. Far above his Avg means the projection likes him more than the room does.">Model<span class="ar"></span></th>
+<th data-s="gap" title="Average public rank minus his rank here. Positive means the room should let him fall to you.">Gap<span class="ar"></span></th>
 </tr></thead><tbody id="rows"></tbody></table>
 <p class="hint">
 FFC / FCalc / ESPN / Yahoo, densely re-ranked to one slot per player, and weighted
@@ -268,16 +261,14 @@ they publish is search popularity, not ADP.<br>
 Injury tags come live from Sleeper. <b>IR / PUP / Out / Doubtful / Sus</b> players are struck through
 and kept out of the value panel — cheap for a reason is not the same as cheap.
 Where they land = each system plotted against their average, window &plusmn;40 slots<span class="key d-ffc"></span>FFC<span class="key d-fc"></span>FCalc<span class="key d-espn"></span>ESPN<span class="key d-yh"></span>Yahoo. A wide plot means nobody agrees, which is where the value hides.<br>
-Model = where the projection model alone puts him; the difference between Model and the blended rank
-shows how far the crowd pulled him. Gap = average public rank minus the blended rank; positive means
-the room should let him fall to you.<br>
-Market (&minus;10 to +10) = where the betting money
-sits. If a season-long prop exists for that player, it compares the book's line to the projection
-behind his rank; otherwise it falls back to his team's win total. Hover the number for the
-underlying line.<br>
+<b>Model</b> = where the projection alone ranks him, with every public board ignored. It is the
+half of this board that isn't just aggregated ADP: season projections rescored for your exact scoring
+(0.75/catch TE, the yardage bonuses), then measured against replacement level at each position. When
+Model sits far above his Avg, the projection likes him more than the room does — and his rank here
+lands between the two. <b>Gap</b> = average public rank minus his rank here; positive means the room
+should let him fall to you.<br>
 Badges: <b>SLEEPER</b> = going 25+ slots later on Sleeper than he ranks here, outside the top 75.
 <b>VALUE</b> = 18+ slots of edge on the public average. <b>FADE</b> = 18+ slots the other way.<br>
-Scoring fit (&minus;10 to +10) = how much this league's quirks change a player's value versus a plain half-PPR league. Driven by how often he posts 100-yard games, the extra 0.25 per TE catch, and the fact that six bench spots make injury-contingent stashes expensive.<br>
 Tiers are drops in value over replacement, not even buckets. Positional tier is under the position chip.
 </p></div>
 
@@ -325,24 +316,6 @@ if(x.fcalcr!=null)h+=`<b class="d-fc" style="left:${pos(x.fcalcr)}%"></b>`;
 if(x.espnr!=null)h+=`<b class="d-espn" style="left:${pos(x.espnr)}%"></b>`;
 if(x.yahoor!=null)h+=`<b class="d-yh" style="left:${pos(x.yahoor)}%"></b>`;
 return h+`</div><span class="spnum">${x.spread?("\u00b1"+x.spread):"tight"}</span>`;}
-function mktCell(x){
- if(x.mkt==null)return `<span class="flat">—</span>`;
- const w=Math.abs(x.mkt)/10*32, col=x.mkt>0?"var(--good)":"var(--bad)";
- const st=x.mkt>0?`left:50%;width:${w}px`:`right:50%;width:${w}px`;
- const c=x.mkt>=4?"up":x.mkt<=-4?"dn":"flat";
- const t=x.prop?`${x.prop} · proj ${x.propdelta>0?"+":""}${x.propdelta}%`:`win total ${x.win}`;
- return `<span class="fitn ${c}" title="${t}">${x.mkt>0?"+":""}${x.mkt}</span>
-  <div class="fitbar"><div class="z"></div><i style="${st};background:${col}"></i></div>
-  <span class="mkw">${x.prop?"prop":"win "+x.win}</span>`;}
-function fitCell(x){
- if(x.fit==null)return `<span class="flat">—</span>`;
- const w=Math.abs(x.fit)/10*32, col=x.fit>0?"var(--good)":"var(--bad)";
- const st=x.fit>0?`left:50%;width:${w}px`:`right:50%;width:${w}px`;
- const c=x.fit>=4?"up":x.fit<=-4?"dn":"flat";
- return `<span class="fitn ${c}">${x.fit>0?"+":""}${x.fit}</span>
-  <div class="fitbar"><div class="z"></div><i style="${st};background:${col}"></i></div>`;}
-
-// Normal CDF via Abramowitz-Stegun 7.1.26, plenty for a draft board.
 function ncdf(z){const t=1/(1+.2316419*Math.abs(z));
  const d=.3989423*Math.exp(-z*z/2);
  let pr=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
@@ -525,7 +498,7 @@ function render(){
  for(const x of list){
   if(bands&&x[tkey]!==tier){tier=x[tkey];
    const lbl=tier?((single?S.pos+" tier ":"Tier ")+tier):"Unprojected";
-   h+=`<tr class="tr"><td colspan="15"><div class="trl">${lbl}</div></td></tr>`;}
+   h+=`<tr class="tr"><td colspan="13"><div class="trl">${lbl}</div></td></tr>`;}
   const d=S.gone.has(x.rk); const mineRow=S.mine.has(x.rk); const hurt=INJ_BAD.has(x.inj);
   const gC=x.gap==null?"flat":x.gap>=12?"up":x.gap<=-12?"dn":"flat";
   const gV=x.gap==null?"—":(x.gap>0?"+":"")+x.gap;
@@ -547,9 +520,8 @@ function render(){
    <td class="hide-m">${dots(x)}</td>
    <td class="hide-s flat">${x.model==null?"—":x.model}</td>
    <td class="${gC}">${gV}</td>
-   <td class="fit">${mktCell(x)}</td>
-   <td class="fit">${fitCell(x)}</td></tr>`;}
- document.getElementById("rows").innerHTML=h||`<tr><td colspan="15" class="empty">Nobody left matching that.</td></tr>`;
+</tr>`;}
+ document.getElementById("rows").innerHTML=h||`<tr><td colspan="13" class="empty">Nobody left matching that.</td></tr>`;
  const left=p=>DATA.filter(x=>x.pos===p&&!S.gone.has(x.rk)).length;
  document.getElementById("tally").innerHTML=`<b>${S.gone.size}</b> drafted · <b>${S.mine.size}</b> mine · left: `+
   ["QB","RB","WR","TE","K","DST"].map(p=>`${p==="DST"?"DEF":p} <b>${left(p)}</b>`).join(" · ");
@@ -568,7 +540,7 @@ document.getElementById("posf").addEventListener("click",e=>{
  [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));render();});
 document.querySelectorAll("thead th").forEach(th=>{th.addEventListener("click",()=>{
  const k=th.dataset.s;
- if(S.sort===k)S.dir*=-1;else{S.sort=k;S.dir=["spread","gap","fit","lastp","vor","trend"].includes(k)?-1:1;}
+ if(S.sort===k)S.dir*=-1;else{S.sort=k;S.dir=["spread","gap","lastp","vor","trend"].includes(k)?-1:1;}
  document.querySelectorAll("thead th").forEach(o=>{o.classList.toggle("sorted",o===th);
   o.querySelector(".ar").textContent=o===th?(S.dir===1?" ▲":" ▼"):"";});render();});});
 document.getElementById("sync").addEventListener("click",()=>{
@@ -595,7 +567,7 @@ document.getElementById("info").addEventListener("click",e=>{
   if(s && m.generated) s.textContent = "Data as of " + m.generated;
   if(!window.BOARD_DATA){
     document.getElementById("rows").innerHTML =
-      '<tr><td colspan="15" class="empty">board-data.js not found \u2014 it must sit in the same folder as this file.</td></tr>';
+      '<tr><td colspan="13" class="empty">board-data.js not found \u2014 it must sit in the same folder as this file.</td></tr>';
   }
 })();
 load();

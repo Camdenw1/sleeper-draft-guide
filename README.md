@@ -2,7 +2,7 @@
 
 A draft board for a 12-team half-PPR league with a TE premium and 100/200-yard
 bonuses. Rankings blend a projection model rescored for this exact scoring with
-three public ADP sources and the betting market.
+four public half-PPR sources and live injury data.
 
 ```
 draft-board-2026.html   presentation — hand-edited, never overwritten
@@ -63,13 +63,11 @@ still works if someone's API is down or the wifi isn't cooperating.
 | **Lasts** | chance he's still there at your next pick, from FFC's real ADP mean and dispersion |
 | **FFC / FCalc / ESPN / Yahoo** | each source's rank, densely re-ranked to one slot per player. Weighted 2 / 1.5 / 1 / 1, not averaged flat — see below |
 | **Where they land** | the three sources plotted against their own average |
-| **Model** | the unblended projection view |
+| **Model** | where the projection alone ranks him, ignoring every public board — the half of this that isn't aggregated ADP |
 | **Gap** | public average minus blended rank; positive means he should fall to you |
-| **Market** | −10 to +10; prop line vs projection, or team win total as fallback |
-| **Scoring fit** | −10 to +10; how much this league's quirks help or hurt him |
 
-Badges: **SLEEPER** = 25+ slots later on Sleeper than he ranks here, outside the
-top 75. **VALUE** = 18+ slots of edge. **FADE** = 18+ the other way.
+Badges: **SLEEPER** = 25+ slots later on FFC's half-PPR ADP than he ranks here,
+outside the top 75. **VALUE** = 18+ slots of edge. **FADE** = 18+ the other way.
 
 ### Kickers and defenses
 
