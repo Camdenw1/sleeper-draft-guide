@@ -138,9 +138,21 @@ Two sources were tested and rejected. Don't re-add either without new evidence:
   is a team win-total proxy and carries half the weight.
 - Deep bench players are smoothed across 17 games rather than modelled as spiky.
 
+## Built since — don't rebuild these
+
+- **Sleeper live-draft sync.** Done. Paste a draft id and slot into the rail; it
+  polls `GET /v1/draft/{draft_id}/picks` every 5s, crosses picks off, routes your
+  own into My Team, and recomputes your next pick from the snake order. Gives up
+  after three consecutive failures. Sleeper's API allows the cross-origin call.
+- **My Team / Best available / Value coming up** panels, and the *Lasts* column
+  (chance a player survives to your next pick, from FFC's ADP dispersion).
+
 ## Next build
 
-Sleeper live-draft sync. The league is on Sleeper, whose API is public and needs no
-auth: `GET https://api.sleeper.app/v1/draft/{draft_id}/picks` returns every pick.
-Poll it and cross players off automatically instead of tapping rows. Roughly an
-hour of work and the highest-value thing left.
+**Backtesting.** Every constant in this project is reasoned but unvalidated:
+`W=0.50`, the `SRCW` source weights, `RELIABILITY`, the `FLOOR` picks, the tier
+gaps, and the Monte Carlo dispersion parameters in fit.py. Nothing has ever been
+scored against a finished season. Run the board against 2025 actuals and check
+whether the blend actually beat drafting straight off FFC ADP — that is the only
+way to know if the model half is earning its place. Offseason work, not
+two-weeks-before-the-draft work.
