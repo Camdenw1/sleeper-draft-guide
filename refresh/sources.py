@@ -184,13 +184,63 @@ def fetch_mfl(year):
     return out, f"{adp.get('totalDrafts','?')} drafts", {}
 
 
+def fetch_fantasycalc(_year):
+    """FantasyCalc redraft values for EXACTLY this league: half PPR, 1 QB, 12 teams.
+
+    Not ADP -- a market value derived from real league activity -- but it is
+    format-exact and it is a genuinely independent read on the same question. It
+    also carries every player's Sleeper id, which is how the injury feed joins on
+    without any name matching at all.
+    """
+    d = _get("https://api.fantasycalc.com/values/current"
+             "?isDynasty=false&numQbs=1&numTeams=12&ppr=0.5")
+    out, extra = {}, {}
+    for r in d:
+        pl = r.get("player") or {}
+        nm, rk = pl.get("name"), r.get("overallRank")
+        if not nm or not rk:
+            continue
+        out[nm] = rk
+        extra[nm] = {"trend30": r.get("trend30Day"),
+                     "sleeper_id": pl.get("sleeperId"),
+                     "tier": r.get("maybeTier")}
+    return out, f"{len(out)} ranked (half-PPR/1QB/12tm)", extra
+
+
+def fetch_injuries(_year):
+    """Live injury status from Sleeper's public player dump.
+
+    Sleeper carries injury_status (IR / PUP / Out / Doubtful / Questionable /
+    Sus), the body part, and roster status for every player, updated constantly.
+    We already download this file for the trending signal, so the injury data is
+    free. Returned as a rank-shaped dict so it rides the same cache machinery;
+    the payload is in the extras.
+    """
+    d = _get("https://api.sleeper.app/v1/players/nfl", timeout=90)
+    out, extra = {}, {}
+    for v in d.values():
+        nm = v.get("full_name")
+        st = v.get("injury_status")
+        if not nm or not st:
+            continue
+        if v.get("position") not in ("QB", "RB", "WR", "TE", "K", "DEF"):
+            continue
+        out[nm] = 1
+        extra[nm] = {"status": st,
+                     "body": v.get("injury_body_part"),
+                     "roster": v.get("status"),
+                     "note": (v.get("injury_notes") or "")[:160],
+                     "practice": v.get("practice_participation")}
+    return out, f"{len(out)} carrying an injury tag", extra
+
+
 SOURCES = [("ffc", fetch_ffc), ("espn", fetch_espn), ("yahoo", fetch_yahoo),
-           ("trending", fetch_trending)]
+           ("fcalc", fetch_fantasycalc), ("injuries", fetch_injuries)]
 
 # Every ranking column is now REAL ADP from real drafts. Sleeper was dropped as a
 # column -- search_rank is search popularity, not draft position, and Sleeper
 # publishes no ADP anywhere -- but is still fetched for the trending signal.
-RANK_SOURCES = ("ffc", "espn", "yahoo")
+RANK_SOURCES = ("ffc", "espn", "yahoo", "fcalc")
 
 
 # ------------------------------------------------------------------ cache ---
@@ -209,7 +259,7 @@ def load(year=2026, refresh=False, quiet=False):
 
     fresh = (not refresh and cache.get("fetched_at", 0) > time.time() - TTL)
     data, notes = {}, {}
-    extras = cache.get("extras", {})
+    extras = dict(cache.get("extras", {}))
 
     for key, fn in SOURCES:
         if fresh and key in cache.get("data", {}):
@@ -223,7 +273,7 @@ def load(year=2026, refresh=False, quiet=False):
                 raise ValueError(f"only {len(got)} rows -- looks broken")
             data[key], notes[key] = got, note
             if extra:
-                extras = extra
+                extras[key] = extra
         except Exception as e:                     # noqa: BLE001 - any failure falls back
             stale = cache.get("data", {}).get(key)
             if stale:

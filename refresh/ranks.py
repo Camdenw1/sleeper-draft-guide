@@ -75,30 +75,41 @@ def norm(n):
 
 
 DATA, NOTES, EXTRAS = sources.load()
+FFCX  = EXTRAS.get("ffc", {})
+FCX   = EXTRAS.get("fcalc", {})
+INJX  = EXTRAS.get("injuries", {})
 
-# Every source is now a real ADP in picks. Lower is better in all four, so they are
+# Every ranking source is format-aware. Lower is better in all of them, so they are
 # directly comparable once densely re-ranked within the pool (blend.py).
 FFC_N   = {norm(k): v for k, v in DATA.get("ffc", {}).items()}
 ESPN_N  = {norm(k): v for k, v in DATA.get("espn", {}).items()}
 YAHOO_N = {norm(k): v for k, v in DATA.get("yahoo", {}).items()}
+FC_N    = {norm(k): v for k, v in DATA.get("fcalc", {}).items()}
 
 # FFC also hands us bye weeks and real ADP dispersion for free. The dispersion is
 # the useful part: it is measured disagreement among actual drafters, per player,
 # which is what tells you whether someone will still be there at your next pick.
-BYE_N   = {norm(k): v.get("bye") for k, v in EXTRAS.items() if v.get("bye")}
-ADP_N   = {norm(k): DATA.get("ffc", {}).get(k) for k in EXTRAS}
-SD_N    = {norm(k): v.get("stdev") for k, v in EXTRAS.items() if v.get("stdev")}
-HI_N    = {norm(k): v.get("high") for k, v in EXTRAS.items() if v.get("high")}
-LO_N    = {norm(k): v.get("low") for k, v in EXTRAS.items() if v.get("low")}
+BYE_N   = {norm(k): v.get("bye") for k, v in FFCX.items() if v.get("bye")}
+ADP_N   = {norm(k): DATA.get("ffc", {}).get(k) for k in FFCX}
+SD_N    = {norm(k): v.get("stdev") for k, v in FFCX.items() if v.get("stdev")}
+HI_N    = {norm(k): v.get("high") for k, v in FFCX.items() if v.get("high")}
+LO_N    = {norm(k): v.get("low") for k, v in FFCX.items() if v.get("low")}
 
-# Momentum, not a rank: raw weekly add count, rescaled 0-100 against the busiest
-# player so it reads as "how hot is he right now".
-_tr = DATA.get("trending", {})
-_mx = max(_tr.values()) if _tr else 1
-TREND_N = {norm(k): round(100.0 * v / _mx) for k, v in _tr.items()}
+# Momentum: FantasyCalc's 30-day change in market value. This replaced Sleeper's
+# trending-adds feed, which measured waiver activity for players not on this board
+# and squashed every real signal to nearly zero.
+_tr = {norm(k): v.get("trend30") for k, v in FCX.items() if v.get("trend30") is not None}
+_mx = max((abs(v) for v in _tr.values()), default=1) or 1
+TREND_N = {k: round(100.0 * v / _mx) for k, v in _tr.items()}   # -100..+100
 
-COLUMNS = [("ffc", FFC_N), ("espn", ESPN_N), ("yahoo", YAHOO_N)]
+# Live injury tags, straight off Sleeper's player feed.
+INJ_N = {norm(k): v for k, v in INJX.items()}
+# Statuses that mean "do not draft him as a starter"
+INJ_BAD = {"IR", "PUP", "Out", "Sus", "NA", "DNR", "Doubtful"}
+
+COLUMNS = [("ffc", FFC_N), ("espn", ESPN_N), ("yahoo", YAHOO_N), ("fcalc", FC_N)]
 
 if __name__ == "__main__":
     for k, v in NOTES.items():
-        print(f"{k:8} {v}")
+        print(f"{k:10} {v}")
+    print(f"\ninjury tags: {len(INJ_N)}   trend: {len(TREND_N)}   dispersion: {len(SD_N)}")

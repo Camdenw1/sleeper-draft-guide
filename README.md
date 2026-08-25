@@ -61,7 +61,7 @@ still works if someone's API is down or the wifi isn't cooperating.
 |---|---|
 | **#** | blended rank — half model, half public consensus, nudged by market |
 | **Lasts** | chance he's still there at your next pick, from FFC's real ADP mean and dispersion |
-| **FFC / ESPN / Yahoo** | each source's ADP, densely re-ranked to one slot per player. Weighted 2 / 1 / 1, not averaged flat — see below |
+| **FFC / FCalc / ESPN / Yahoo** | each source's rank, densely re-ranked to one slot per player. Weighted 2 / 1.5 / 1 / 1, not averaged flat — see below |
 | **Where they land** | the three sources plotted against their own average |
 | **Model** | the unblended projection view |
 | **Gap** | public average minus blended rank; positive means he should fall to you |
@@ -96,14 +96,28 @@ All rankings come from free, public, no-auth endpoints, fetched at build time by
 |---|---|---|
 | [Fantasy Football Calculator](https://fantasyfootballcalculator.com) | Real **half-PPR, 12-team ADP** from thousands of public mock drafts — the only source whose format matches this league exactly, so it anchors the blend | `/api/v1/adp/half-ppr` |
 | ESPN | Real ADP (`ownership.averageDraftPosition`), not their editorial board | `lm-api-reads.fantasy.espn.com` |
-| Sleeper | **Not a ranking column.** `search_rank` is search popularity, not ADP, and Sleeper publishes no ADP anywhere — used only for the trending/HOT signal | `api.sleeper.app/v1/players/nfl` |
+| **FantasyCalc** | Market value at `ppr=0.5&numQbs=1&numTeams=12` — exactly this league. Also supplies the 30-day market trend behind the ↑/↓ arrows | `api.fantasycalc.com/values/current` |
+| **Sleeper (injuries)** | **Live injury status** — IR / PUP / Out / Doubtful / Questionable plus body part, updated constantly | `api.sleeper.app/v1/players/nfl` |
+| Sleeper (ranks) | **Not a ranking column.** `search_rank` is search popularity, not ADP, and Sleeper publishes no ADP anywhere — used only for the trending/HOT signal | `api.sleeper.app/v1/players/nfl` |
 | Yahoo | Public draft-analysis average pick | `pub-api-ro.fantasysports.yahoo.com` |
 
-**All three columns are real ADP** — what drafters actually did, not an editor's
-list — and they are weighted **2 / 1 / 1 (FFC / Yahoo / ESPN)**, not averaged flat.
-FFC is the only source in real half-PPR 12-team format, so it anchors. Yahoo is
-average pick at their default 0.5/reception. ESPN is average draft position across
-ESPN drafts.
+**No column is an editor's list** — every one is what people actually did. They are
+weighted **2 / 1.5 / 1 / 1 (FFC / FantasyCalc / Yahoo / ESPN)**, not averaged flat,
+with the two format-exact sources leading. FFC is real half-PPR 12-team ADP.
+FantasyCalc is half-PPR / 1QB / 12-team market value — same format, priced off real
+league activity instead of mock drafts. Yahoo is average pick at their default
+0.5/reception; ESPN is average draft position across ESPN drafts.
+
+### Injuries
+
+Live from Sleeper's player feed on every build. Injured players get a badge, and
+IR / PUP / Out / Doubtful / Sus are struck through and **excluded from the value
+panel** — cheap for a reason is not the same as cheap.
+
+The build also cross-checks that feed against the hand-set `avail` in
+`players.py` and prints anyone the feed calls IR/PUP/Out while the model still
+values him as fully healthy. That check immediately found Zach Charbonnet on PUP
+with a torn ACL, carried at `avail=1.00`.
 
 Two sources were tried and rejected rather than padding the count. **Sleeper**
 publishes no ADP at all — `search_rank` is search popularity, and their GraphQL has

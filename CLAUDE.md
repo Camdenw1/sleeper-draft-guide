@@ -63,12 +63,30 @@ to match the page** without asking -- that mismatch is deliberate.
   range of the next pick. Uncapped it is entirely tight ends, because the 0.75
   premium means every TE beats public ADP. True, but not a draft strategy.
 
-## Ranking sources — all three are real ADP. Keep it that way.
+## Ranking sources — market data only, no editorial boards. Keep it that way.
 
-Weighted 2 / 1 / 1 (FFC / Yahoo / ESPN) in `SRCW` in blend.py, not averaged flat.
-Only FFC is genuinely half-PPR 12-team, so it anchors. ESPN must read
-`ownership.averageDraftPosition`, **not** `draftRanksByRankType` — that board's
-STANDARD and PPR variants are byte-identical and carry no format information.
+Weighted **2 / 1.5 / 1 / 1** (FFC / FantasyCalc / Yahoo / ESPN) in `SRCW` in
+blend.py, not averaged flat. The two format-exact sources lead:
+
+- **FFC** — real half-PPR 12-team ADP from thousands of mock drafts. The anchor.
+- **FantasyCalc** — market value at `ppr=0.5&numQbs=1&numTeams=12`, i.e. exactly
+  this league. Value rather than ADP, so it reads the same question from a
+  different direction. Also carries `sleeperId` and a 30-day value trend.
+- **Yahoo** / **ESPN** — real ADP from their own drafts. ESPN must read
+  `ownership.averageDraftPosition`, **not** `draftRanksByRankType` — that board's
+  STANDARD and PPR variants are byte-identical and carry no format information.
+
+## Injuries — live, and they audit players.py
+
+`fetch_injuries` in sources.py reads Sleeper's player dump (already downloaded)
+for `injury_status`, body part and roster status. Badges render on the board;
+IR/PUP/Out/Doubtful/Sus players are struck through and excluded from the value
+panel.
+
+**build.py prints a LIVE INJURY vs avail block** whenever the feed says a player
+is IR/PUP/Out but `players.py` still values him at `avail=1.00`. That is how the
+Charbonnet (PUP, torn ACL, valued fully healthy) hole was found. Don't silence it
+— fix `avail`, or accept it deliberately.
 
 Two sources were tested and rejected. Don't re-add either without new evidence:
 
