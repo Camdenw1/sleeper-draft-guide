@@ -106,6 +106,24 @@ FantasyCalc is half-PPR / 1QB / 12-team market value — same format, priced off
 league activity instead of mock drafts. Yahoo is average pick at their default
 0.5/reception; ESPN is average draft position across ESPN drafts.
 
+### Projections
+
+The stat projections are a **three-source consensus**: the hand-entered baseline in
+`players.py`, averaged with ESPN's and Sleeper's own season projections. 219 of 220
+players carry two or more sources.
+
+This replaced a single hand-entered source, which was the model's biggest weakness —
+every ranking inherited its errors. It also carried **integer touchdown counts**: 28
+players sat at exactly 7 receiving TDs. A touchdown is 6 points, so that rounding
+alone moved players several slots. The consensus has 70 distinct TD values instead
+of 18.
+
+Sleeper's feed also carries `fum_lost`, so the league's **−2 per lost fumble** is
+modelled for the first time, and projected interceptions replaced a hand-kept table.
+
+A feed whose line implies a different *role* for a player — a projected starter
+listed as a deep backup — is rejected rather than averaged in.
+
 ### Injuries
 
 Live from Sleeper's player feed on every build. Injured players get a badge, and

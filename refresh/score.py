@@ -15,24 +15,23 @@ Per-game yardage bonuses live in fit.py.
 """
 import json
 import numpy as np
-import players as P
+import proj as P
 
 RNG = np.random.default_rng(20260823)
 N = 40000
 
 
-def base(passYd=0, passTD=0, ints=0, ruYd=0, ruTD=0, rec=0, reYd=0, reTD=0, ppr=0.5):
+def base(passYd=0, passTD=0, ints=0, ruYd=0, ruTD=0, rec=0, reYd=0, reTD=0,
+         ppr=0.5, fum=0):
     return (0.04 * passYd + 4 * passTD - 2 * ints + 0.1 * ruYd + 6 * ruTD
-            + 0.1 * reYd + 6 * reTD + ppr * rec)
+            + 0.1 * reYd + 6 * reTD + ppr * rec - 2 * fum)
 
 
-QBINT = {"Josh Allen":9,"Drake Maye":9,"Lamar Jackson":8,"Jayden Daniels":11,"Jalen Hurts":7,
- "Bo Nix":12,"Joe Burrow":10,"Brock Purdy":13,"Caleb Williams":8,"Dak Prescott":10,
- "Jaxson Dart":9,"Justin Herbert":11,"Trevor Lawrence":11,"Jared Goff":10,"Tyler Shough":10,
- "Patrick Mahomes":11,"Kyler Murray":12,"Matthew Stafford":9,"Baker Mayfield":12,
- "Malik Willis":10,"Sam Darnold":13,"Jordan Love":10,"Daniel Jones":12,"Bryce Young":10,
- "C.J. Stroud":10,"Geno Smith":14,"Cam Ward":11,"Aaron Rodgers":8,"Jacoby Brissett":10,
- "Fernando Mendoza":10}
+# Interceptions and lost fumbles are projected by the feeds now (see proj.py),
+# so the hand-kept QBINT table is gone. Lost fumbles are -2 in this league and
+# were previously not modelled at all for want of data.
+FUM = P.FUM
+
 
 # ------------------------------------------------------------------ kicker ---
 # Standard fantasy kicker scoring: 3 under 40, 4 from 40-49, 5 from 50+, PAT 1,
@@ -69,10 +68,14 @@ def pa_points(pa_season):
 
 
 pts = {}
-for n,tm,a,py,ptd,ry,rtd,av in P.QB: pts[n]=base(py,ptd,QBINT.get(n,10),ry,rtd)*av
-for n,tm,a,ra,ry,rtd,rc,red,retd,av in P.RB: pts[n]=base(ruYd=ry,ruTD=rtd,rec=rc,reYd=red,reTD=retd)*av
-for n,tm,a,rc,red,retd,ra,ry,rtd,av in P.WR: pts[n]=base(ruYd=ry,ruTD=rtd,rec=rc,reYd=red,reTD=retd)*av
-for n,tm,a,rc,red,retd,av in P.TE: pts[n]=base(rec=rc,reYd=red,reTD=retd,ppr=0.75)*av   # TE premium
+for n,tm,a,py,ptd,ry,rtd,av in P.QB:
+    pts[n]=base(py,ptd,P.INT.get(n,10),ry,rtd,fum=FUM.get(n,0))*av
+for n,tm,a,ra,ry,rtd,rc,red,retd,av in P.RB:
+    pts[n]=base(ruYd=ry,ruTD=rtd,rec=rc,reYd=red,reTD=retd,fum=FUM.get(n,0))*av
+for n,tm,a,rc,red,retd,ra,ry,rtd,av in P.WR:
+    pts[n]=base(ruYd=ry,ruTD=rtd,rec=rc,reYd=red,reTD=retd,fum=FUM.get(n,0))*av
+for n,tm,a,rc,red,retd,av in P.TE:
+    pts[n]=base(rec=rc,reYd=red,reTD=retd,ppr=0.75,fum=FUM.get(n,0))*av  # TE premium
 
 for n,tm,a,fgm,fga,xpm,leg in P.K:
     pts[n] = fgm * fg_ev(leg) + xpm - (fga - fgm)      # FG missed is -1
@@ -81,6 +84,7 @@ for n,tm,a,sk,fr,it,dtd,pa,saf,ktd in P.DST:
     pts[f"{tm} {n}"] = sk + 2*it + 2*fr + 6*(dtd+ktd) + 2*saf + pa_points(pa)
 
 json.dump(pts, open("halfppr_pts.json", "w"))
+P.report()
 print(f"scored {len(pts)} players")
 ks = sorted([(v, k) for k, v in pts.items() if any(k == r[0] for r in P.K)], reverse=True)[:3]
 print("  top kickers:", ", ".join(f"{k} {v:.0f}" for v, k in ks))

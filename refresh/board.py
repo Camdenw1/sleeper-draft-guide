@@ -1,4 +1,4 @@
-import json, numpy as np, hp_data as D, players as P, ranks as R, market as M
+import json, numpy as np, hp_data as D, proj as P, ranks as R, market as M
 exec(open('blend.py').read().split('json.dump(rows,open("blend_out.json","w"))')[0].replace(
      'json.dump(rows,open("blend_out.json","w"))',''))
 

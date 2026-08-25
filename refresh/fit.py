@@ -16,7 +16,7 @@ discarded. They were moved here and model.py deleted.
 """
 import json
 import numpy as np
-import players as P
+import proj as P
 
 RNG = np.random.default_rng(20260823)
 N = 40000

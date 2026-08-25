@@ -1,4 +1,4 @@
-import json, numpy as np, hp_data as D, players as P, ranks as R
+import json, numpy as np, hp_data as D, proj as P, ranks as R
 
 BYE={"BUF":7,"NE":11,"BAL":13,"WAS":7,"PHI":10,"DEN":10,"CIN":6,"SF":8,"CHI":10,"DAL":14,
 "NYG":8,"LAC":7,"JAC":7,"DET":6,"NO":8,"KC":5,"MIN":6,"LAR":11,"TB":10,"MIA":6,"SEA":11,

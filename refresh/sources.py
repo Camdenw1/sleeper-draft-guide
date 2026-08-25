@@ -234,8 +234,82 @@ def fetch_injuries(_year):
     return out, f"{len(out)} carrying an injury tag", extra
 
 
+# ------------------------------------------------------- projections --------
+# The board's stat projections used to come from a single hand-entered source,
+# which was the largest weakness in the whole model: every ranking inherited its
+# errors, and its touchdown counts were INTEGERS -- 28 players sat at exactly 7
+# receiving TDs. A touchdown is 6 points, so rounding them is expensive. These two
+# feeds are free, cover the pool, and give fractional expectations.
+
+ESPN_STAT = {"3":"passYd","4":"passTD","20":"int","24":"ruYd","25":"ruTD",
+             "42":"reYd","43":"reTD","53":"rec","23":"ruAtt","58":"tgt"}
+
+
+def fetch_espn_proj(year):
+    """ESPN's own season projections -- fractional, and already in the payload
+    we download for ADP, so this costs one extra parse and no extra request."""
+    filt = json.dumps({"players": {"limit": 400, "sortDraftRanks": {
+        "sortPriority": 100, "sortAsc": True, "value": "PPR"}}})
+    d = _get(f"https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/"
+             f"{year}/segments/0/leaguedefaults/3?view=kona_player_info",
+             headers={"x-fantasy-filter": filt, "accept": "application/json"})
+    out, extra = {}, {}
+    for pl in d.get("players", []):
+        pp = pl.get("player", pl)
+        blk = [b for b in (pp.get("stats") or [])
+               if b.get("statSourceId") == 1 and b.get("scoringPeriodId") == 0
+               and b.get("seasonId") == year]
+        nm = pp.get("fullName")
+        if not blk or not nm:
+            continue
+        st = blk[0].get("stats") or {}
+        line = {v: float(st.get(k, 0) or 0) for k, v in ESPN_STAT.items()}
+        if sum(line.values()) <= 0:
+            continue
+        out[nm] = 1
+        extra[nm] = line
+    return out, f"{len(extra)} season projections", extra
+
+
+SLEEPER_STAT = {"pass_yd":"passYd","pass_td":"passTD","pass_int":"int",
+                "rush_att":"ruAtt","rush_yd":"ruYd","rush_td":"ruTD",
+                "rec":"rec","rec_yd":"reYd","rec_td":"reTD","fum_lost":"fumLost"}
+
+
+def fetch_sleeper_proj(year):
+    """Sleeper's season projections, which are natively half-PPR scored and are
+    the only source carrying fum_lost -- the -2 the league charges for a lost
+    fumble, which the board could not model before."""
+    out, extra = {}, {}
+    for pos in ("QB", "RB", "WR", "TE"):
+        try:
+            d = _get(f"https://api.sleeper.app/projections/nfl/{year}"
+                     f"?season_type=regular&position[]={pos}"
+                     "&order_by=pts_half_ppr", timeout=60)
+        except Exception:                        # noqa: BLE001
+            continue
+        for r in d:
+            pl = r.get("player") or {}
+            nm = " ".join(x for x in (pl.get("first_name"), pl.get("last_name")) if x)
+            st = r.get("stats") or {}
+            if not nm or not st:
+                continue
+            line = {v: float(st.get(k, 0) or 0) for k, v in SLEEPER_STAT.items()}
+            gp = float(st.get("gp") or 0)
+            # Sleeper projects an 18-game slate; rescale to the 17 the league plays
+            if gp > 17.5:
+                line = {k: v * 17.0 / gp for k, v in line.items()}
+            if sum(line.values()) <= 0:
+                continue
+            out[nm] = 1
+            extra[nm] = line
+        time.sleep(0.3)
+    return out, f"{len(extra)} season projections", extra
+
+
 SOURCES = [("ffc", fetch_ffc), ("espn", fetch_espn), ("yahoo", fetch_yahoo),
-           ("fcalc", fetch_fantasycalc), ("injuries", fetch_injuries)]
+           ("fcalc", fetch_fantasycalc), ("injuries", fetch_injuries),
+           ("espnproj", fetch_espn_proj), ("sleeperproj", fetch_sleeper_proj)]
 
 # Every ranking column is now REAL ADP from real drafts. Sleeper was dropped as a
 # column -- search_rank is search popularity, not draft position, and Sleeper

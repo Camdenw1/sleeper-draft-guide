@@ -18,7 +18,11 @@ refreshes never clobber UI work, and UI work never has to touch the pipeline.
 
 `refresh/build.py` chains three steps and writes `board-data.js` + `rankings.csv`:
 
-1. `score.py` → rescores season projections for this league's scoring
+0. `proj.py` → builds CONSENSUS season projections: the hand-entered baseline in
+   `players.py` averaged with ESPN's and Sleeper's own season projections. Keeps
+   the pool and `avail` from players.py; a feed whose line implies a different
+   role for a player is rejected rather than averaged in.
+1. `score.py` → rescores those projections for this league's scoring
 2. `fit.py` → Monte Carlo (40k games/player) for the 100/200-yard bonuses, since a
    bonus is a step function and E[bonus] ≠ bonus(E[yards])
 3. `board.py` (which execs `blend.py`) → VOR against endogenous replacement level,
@@ -44,8 +48,10 @@ points-allowed tiers 0 / 1-6 / 7-13 / 14-20 / 21-27 / 28-34 / 35+ pay
 +10 / +7 / +4 / +1 / 0 / -1 / -4 · 12 teams · QB, 2RB, 2WR, TE, RB/WR/TE flex,
 WR/TE flex, K, DST, 6 bench.
 
-Verified against the league's scoring page on 24 Aug 2026. Fumble lost (-2) and
-2-pt conversions are NOT modelled -- players.py carries no fumble or 2-pt data.
+Verified against the league's scoring page on 24 Aug 2026. Fumble lost (-2) IS
+now modelled: Sleeper's projections carry `fum_lost` (102 players). Interceptions
+come from the feeds too, replacing the hand-kept QBINT table. 2-pt conversions
+remain unmodelled -- no source projects them.
 
 The scoring page currently shows kicker FG buckets of 1/2/3/4/5/6 plus a 0.10
 per-yard bonus, which would make a 45-yarder worth 8.5 and put a kicker around
@@ -114,8 +120,11 @@ Two sources were tested and rejected. Don't re-add either without new evidence:
 
 - No role-change modelling. A backup is valued at projected volume, not the volume
   he'd get if the starter went down. Handcuffs are undervalued by construction.
-- Projections come from one source, which is why the rank is blended 50/50 with
-  public consensus rather than trusting the model outright.
+- Projections are now a 3-source consensus (players.py + ESPN + Sleeper), 219 of
+  220 players carrying 2+ sources. The 50/50 blend with public consensus stays,
+  but the single-source risk that motivated it is much reduced.
+- `avail` is still hand-set in players.py — it is injury *judgement*, not a stat
+  projection. build.py audits it against the live injury feed on every run.
 - Season-long props were free for only ~30 players; the rest of the market column
   is a team win-total proxy and carries half the weight.
 - Deep bench players are smoothed across 17 games rather than modelled as spiky.
