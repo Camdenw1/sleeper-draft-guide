@@ -17,12 +17,21 @@ rows.sort(key=lambda z:-z["final"])
 # enough -- the value curve is so flat this deep that a defense still surfaced
 # around pick 105. So place them by ORDER instead: skill players fill the board,
 # then K and DST are slotted in no earlier than FLOOR (see blend.py).
+# Only 12 of each is ever drafted -- one per team -- and they go interleaved with
+# bench fliers, not in a block. Insert the top 12 of each on a stride from their
+# floor and let the remainder fall to the bottom of the board. Dropping all 32
+# defenses in consecutively made "best available" read DEF for two straight
+# rounds, which is not how anyone drafts.
+STRIDE, DRAFTED = 2, 12
 _skill=[x for x in rows if x["pos"] not in FLOOR]
-_late={p:[x for x in rows if x["pos"]==p] for p in FLOOR}
-rows=list(_skill)
+_late={p:[x for x in rows if x["pos"]==p] for p in FLOOR}   # already in final order
+rows=list(_skill); _tail=[]
 for pos in sorted(FLOOR, key=lambda p: FLOOR[p]):
-    for i,x in enumerate(_late[pos]):
-        rows.insert(min(len(rows), FLOOR[pos]-1+i), x)
+    grp=_late[pos]
+    for i,x in enumerate(grp[:DRAFTED]):
+        rows.insert(min(len(rows), FLOOR[pos]-1+i*STRIDE), x)
+    _tail.extend(grp[DRAFTED:])
+rows.extend(_tail)
 for i,x in enumerate(rows): x["rk"]=i+1
 for x in rows: x["gap"]=round(x["avg"]-x["rk"])
 

@@ -56,6 +56,28 @@ for pos in ("QB","RB","WR","TE","K","DST"):
     REPL[pos]=rest[0]["tot"] if rest else 0
 for x in rows: x["vor"]=round(x["tot"]-REPL[x["pos"]],1) if x["tot"] is not None else None
 
+# ---- positional reliability -------------------------------------------------
+# Raw VOR asks "how many more points than replacement is he PROJECTED for". For
+# kickers and defenses that badly overstates what you actually bank, for two
+# reasons that compound:
+#
+#   1. Predictability. Kicker scoring is close to noise year over year, and team
+#      defense is not much better. The projected gap between the best kicker and
+#      a replacement one mostly does not repeat, so it is not an edge you can
+#      draft against -- unlike a target share or a backfield workload, which do.
+#   2. Streaming. You never hold one defense all season; you play matchups off
+#      waivers. The real baseline is "best available most weeks", which sits far
+#      above the drafted-replacement baseline VOR measures against.
+#
+# So their VOR is scaled to the share of it worth planning around. This is what
+# makes the MODEL rank them late rather than the display floor papering over a
+# model that still wanted a kicker in round 5.
+RELIABILITY={"K":0.15,"DST":0.30}
+for x in rows:
+    if x["vor"] is not None and x["pos"] in RELIABILITY:
+        x["vor_raw"]=x["vor"]
+        x["vor"]=round(x["vor"]*RELIABILITY[x["pos"]],1)
+
 mr=sorted([x for x in rows if x["vor"] is not None],key=lambda z:-z["vor"])
 for i,x in enumerate(mr): x["model"]=i+1
 for x in rows: x.setdefault("model",None)
@@ -99,17 +121,13 @@ def market(rank):
     i=int(round(rank))-1
     return curve[max(0,min(len(curve)-1,i))]
 W=0.50                       # half model, half market
-# K and DST are the exception. Their VOR edge is real on paper -- the best defense
-# really is ~38 points better than a replacement one -- but it is not actionable:
-# both are streamable off waivers, both have week-to-week variance that swamps the
-# projection, and neither is remotely predictable year over year. The room's
-# TIMING is right and the model's is not, so weight them almost entirely to market
-# and let them fall to the rounds where they are actually drafted.
-# Earliest slot a K or DST is allowed to appear. You start exactly one of each,
-# both are streamable off waivers all season, and neither is predictable year over
-# year -- so capital spent on them before the endgame is capital wasted regardless
-# of what VOR says. The model's opinion is still visible in the Model column.
-FLOOR={"DST":120, "K":140}
+# Earliest slot a K or DST is allowed to appear, on top of the reliability shrink
+# above. The roster is 16 deep (QB/2RB/2WR/TE/2flex/K/DST/6bench) across 12 teams,
+# so a full draft is 192 picks. Real 12-team drafts take a defense late in round 13
+# and a kicker in the last round or two, and there is no reason to be the person
+# who goes earlier: everyone gets one, and the difference between the 1st and 12th
+# is mostly noise. Floors are set to the start of round 13 and round 15.
+FLOOR={"DST":145, "K":169}
 for x in rows:
     mv=market(x["avg"])
     x["mktvor"]=round(mv,1)

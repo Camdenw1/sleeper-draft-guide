@@ -71,13 +71,18 @@ outside the top 75. **VALUE** = 18+ slots of edge. **FADE** = 18+ the other way.
 
 ### Kickers and defenses
 
-They're in the pool and scored properly, but they are **floored to the endgame** —
-no DST before pick 120, no K before pick 140. Their value-over-replacement is real
-on paper (the best defense really is ~38 points better than a replacement one) but
-it isn't actionable: you start exactly one of each, both are streamable off waivers
-all season, and neither is predictable year to year. Left alone, VOR floated a
-defense to pick 71, which is not a pick anyone should make. The model's raw opinion
-is still visible in the *Model* column.
+They're in the pool and scored properly, but the model deliberately discounts
+them. Raw value-over-replacement says the best defense is ~38 points clear of a
+replacement one — true on paper, and misleading. Kicker scoring is close to noise
+year over year, and both positions get streamed off waivers all season, so most of
+that projected edge is not something you can draft against.
+
+So their VOR is scaled to the share worth planning around (K 0.15, DST 0.30), which
+moves them late in the **Model** column itself rather than hiding a model that still
+wanted a kicker in round 5. On top of that, no defense appears before **pick 145**
+and no kicker before **pick 169** — rounds 13 and 15 of a 16-round, 192-pick draft.
+Only the top 12 of each are placed there, interleaved with bench fliers, since only
+one per team is ever drafted.
 
 Full methodology is behind the "How this works" button on the board itself.
 

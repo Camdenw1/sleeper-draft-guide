@@ -61,10 +61,19 @@ to match the page** without asking -- that mismatch is deliberate.
 
 ## Draft-reality overrides — deliberate, don't "fix" them
 
-- **K and DST are floored** (`FLOOR` in blend.py, enforced by order in board.py):
-  no DST before pick 120, no K before pick 140. Their VOR is real but not
-  actionable — one starter each, both streamable, neither predictable. Unfloored,
-  a defense sorted to pick 71.
+- **K and DST are handled in three layers**, because a display floor alone left
+  the *model* still claiming a kicker was worth pick 53:
+  1. `RELIABILITY` in blend.py scales their VOR (K 0.15, DST 0.30) — the share of
+     a projected edge worth planning around, given that kicker scoring is close to
+     noise year over year and both positions are streamed off waivers. This is
+     what makes the MODEL column rank them late (K #95, DST #80) rather than
+     papering over a model that wanted them in round 5.
+  2. `FLOOR` (DST 145, K 169) sets the earliest pick either may appear. The roster
+     is 16 deep across 12 teams = 192 picks, so those are rounds 13 and 15.
+  3. board.py inserts only the **top 12 of each** (one per team), on a stride of 2
+     so they interleave with bench fliers; the rest fall to the bottom. Inserting
+     all 32 defenses consecutively made "best available" read DEF for two straight
+     rounds.
 - The **Value coming up** panel caps at two per position and only shows players in
   range of the next pick. Uncapped it is entirely tight ends, because the 0.75
   premium means every TE beats public ADP. True, but not a draft strategy.
