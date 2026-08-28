@@ -1,24 +1,26 @@
-"""Fetch public half-PPR draft ADP from three free, no-auth sources.
+"""Fetch free public draft-market, expert, injury, and projection data.
 
 Replaces the old hand-pasted FantasyPros ECR and Flock Fantasy exports, which were
-paid products. Everything here is a public endpoint that returns JSON without a key.
+paid products. Everything here is public and needs no account or API key.
 
   FFC     fantasyfootballcalculator.com -- REAL half-PPR 12-team ADP from public
           mock drafts. This is the only source whose format exactly matches the
           league (half PPR, 12 teams), so it is the anchor.
-  ESPN    ESPN's real ADP (ownership.averageDraftPosition), not their editorial
-          board -- that board's STANDARD and PPR variants are byte-identical.
+  ESPN    ESPN's real PPR ADP. Kept as platform context, not included in the
+          strict half-PPR market consensus.
   YAHOO   Yahoo's public draft-analysis feed -- average_pick across their drafts,
           where the default league scoring is 0.5/reception.
+  RBALLER RotoBaller's free, expert-authored half-PPR overall Top 100. This is
+          the expert-opinion lane, not ADP or another projection model.
 
-Every column is real ADP from real drafts. Sleeper is still fetched, but only for
-the trending signal: `search_rank` is search popularity, not draft position, and
-Sleeper publishes no ADP anywhere. See fetch_mfl for why MyFantasyLeague is out.
+The lanes stay distinct because ADP, expert rank, and market value answer different
+questions. Sleeper supplies injuries and projections, not an official ADP column.
+See fetch_mfl for why MyFantasyLeague is out.
 
 Results are cached to pubranks_cache.json (gitignored) so a draft-day rebuild still
 works without a network, and so repeated builds don't hammer anyone's API.
 """
-import json, pathlib, sys, time, urllib.request, urllib.error
+import html, json, pathlib, re, sys, time, urllib.request, urllib.error
 
 HERE = pathlib.Path(__file__).parent
 CACHE = HERE / "pubranks_cache.json"
@@ -30,6 +32,12 @@ def _get(url, headers=None, timeout=30):
     req = urllib.request.Request(url, headers={**UA, **(headers or {})})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8", "replace"))
+
+
+def _get_text(url, headers=None, timeout=30):
+    req = urllib.request.Request(url, headers={**UA, **(headers or {})})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read().decode("utf-8", "replace")
 
 
 # ---------------------------------------------------------------- sources ---
@@ -207,13 +215,50 @@ def fetch_fantasycalc(_year):
     return out, f"{len(out)} ranked (half-PPR/1QB/12tm)", extra
 
 
+def fetch_rotoballer(_year):
+    """Free RotoBaller half-PPR expert rankings from its stable rankings page.
+
+    The page publishes its current top 100 as schema.org JSON-LD, including an
+    explicit order and update timestamp. We intentionally use the structured
+    half-PPR endpoint instead of chasing RotoBaller's dated ranking articles.
+    """
+    raw = _get_text(
+        "https://www.rotoballer.com/nfl-fantasy-football-rankings-tiered-ppr/"
+        "265860/rankings?spreadsheet=half-ppr&league=Overall")
+    blocks = re.findall(
+        r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+        raw, flags=re.I | re.S)
+    modified_hit = re.search(r'"dateModified"\s*:\s*"([^"]+)"', raw)
+    modified = modified_hit.group(1) if modified_hit else "?"
+    for block in blocks:
+        try:
+            doc = json.loads(html.unescape(block))
+        except (json.JSONDecodeError, TypeError):
+            continue
+        docs = doc if isinstance(doc, list) else [doc]
+        for root in docs:
+            if not isinstance(root, dict):
+                continue
+            graph = root.get("@graph", [])
+            candidates = [root, *graph] if isinstance(graph, list) else [root]
+            for item_list in candidates:
+                if not isinstance(item_list, dict) or item_list.get("@type") != "ItemList":
+                    continue
+                out = {item["name"].strip(): float(item["position"])
+                       for item in (item_list.get("itemListElement") or [])
+                       if item.get("name") and item.get("position")}
+                if len(out) >= 90:
+                    return out, (f"{len(out)} expert half-PPR ranks, "
+                                 f"updated {modified} (free public Top 100)"), {}
+    raise ValueError("RotoBaller structured half-PPR Top 100 not found")
+
+
 def fetch_injuries(_year):
     """Live injury status from Sleeper's public player dump.
 
     Sleeper carries injury_status (IR / PUP / Out / Doubtful / Questionable /
     Sus), the body part, and roster status for every player, updated constantly.
-    We already download this file for the trending signal, so the injury data is
-    free. Returned as a rank-shaped dict so it rides the same cache machinery;
+    Returned as a rank-shaped dict so it rides the same cache machinery;
     the payload is in the extras.
     """
     d = _get("https://api.sleeper.app/v1/players/nfl", timeout=90)
@@ -307,19 +352,33 @@ def fetch_sleeper_proj(year):
     return out, f"{len(extra)} season projections", extra
 
 
-SOURCES = [("ffc", fetch_ffc), ("espn", fetch_espn), ("yahoo", fetch_yahoo),
-           ("fcalc", fetch_fantasycalc), ("injuries", fetch_injuries),
+SOURCES = [("ffc", fetch_ffc), ("yahoo", fetch_yahoo),
+           ("rotoballer", fetch_rotoballer), ("fcalc", fetch_fantasycalc),
+           ("espn", fetch_espn), ("injuries", fetch_injuries),
            ("espnproj", fetch_espn_proj), ("sleeperproj", fetch_sleeper_proj)]
 
-# Every ranking column is now REAL ADP from real drafts. Sleeper was dropped as a
-# column -- search_rank is search popularity, not draft position, and Sleeper
-# publishes no ADP anywhere -- but is still fetched for the trending signal.
-RANK_SOURCES = ("ffc", "espn", "yahoo", "fcalc")
+RANK_SOURCES = ("ffc", "yahoo", "rotoballer", "fcalc", "espn")
 
 
 # ------------------------------------------------------------------ cache ---
+LAST_META = {}
+
+
+def _cache_sources(cache):
+    """Read v2 cache or migrate the old one-timestamp shape in memory."""
+    if isinstance(cache.get("sources"), dict):
+        return dict(cache["sources"])
+    fetched = cache.get("fetched_at", 0)
+    return {
+        key: {"fetched_at": fetched, "data": value,
+              "note": cache.get("notes", {}).get(key, "legacy cache"),
+              "extra": cache.get("extras", {}).get(key, {})}
+        for key, value in cache.get("data", {}).items()
+    }
+
+
 def load(year=2026, refresh=False, quiet=False):
-    """Return {source: {name: adp_or_rank}} plus notes and FFC extras.
+    """Return {source: {name: value}} plus notes and per-source extras.
 
     Falls back to cache per-source on any network failure, so a build on draft
     day never dies because someone's API is having a bad afternoon.
@@ -331,41 +390,56 @@ def load(year=2026, refresh=False, quiet=False):
         except json.JSONDecodeError:
             cache = {}
 
-    fresh = (not refresh and cache.get("fetched_at", 0) > time.time() - TTL)
-    data, notes = {}, {}
-    extras = dict(cache.get("extras", {}))
+    now = time.time()
+    cached = _cache_sources(cache)
+    data, notes, extras, meta = {}, {}, {}, {}
 
     for key, fn in SOURCES:
-        if fresh and key in cache.get("data", {}):
-            data[key] = cache["data"][key]
-            notes[key] = cache.get("notes", {}).get(key, "cached") + " (cached)"
-            continue
-        try:
-            got, note, extra = fn(year)
-            floor = 50 if key in RANK_SOURCES else 10
-            if len(got) < floor:
-                raise ValueError(f"only {len(got)} rows -- looks broken")
-            data[key], notes[key] = got, note
-            if extra:
-                extras[key] = extra
-        except Exception as e:                     # noqa: BLE001 - any failure falls back
-            stale = cache.get("data", {}).get(key)
-            if stale:
-                data[key] = stale
-                notes[key] = f"FETCH FAILED ({type(e).__name__}) -- using cache"
-            else:
-                notes[key] = f"FETCH FAILED ({type(e).__name__}) -- NO CACHE, dropped"
+        entry = cached.get(key, {})
+        fetched_at = float(entry.get("fetched_at", 0) or 0)
+        is_fresh = (not refresh and fetched_at > now - TTL and entry.get("data"))
+        status = "cached"
+        if is_fresh:
+            data[key] = entry["data"]
+            notes[key] = entry.get("note", "cached") + " (cached)"
+            extras[key] = entry.get("extra", {})
+        else:
+            try:
+                got, note, extra = fn(year)
+                floor = 50 if key in RANK_SOURCES else 10
+                if len(got) < floor:
+                    raise ValueError(f"only {len(got)} rows -- looks broken")
+                data[key], notes[key], extras[key] = got, note, extra or {}
+                fetched_at, status = now, "live"
+                cached[key] = {"fetched_at": fetched_at, "data": got,
+                               "note": note, "extra": extra or {}}
+            except Exception as e:                 # noqa: BLE001 - keep last known good
+                stale = entry.get("data")
+                if stale:
+                    age = max(0, now - fetched_at) / 3600
+                    data[key] = stale
+                    extras[key] = entry.get("extra", {})
+                    notes[key] = (f"FETCH FAILED ({type(e).__name__}) -- using "
+                                  f"{age:.1f}h-old cache")
+                    status = "stale"
+                else:
+                    notes[key] = f"FETCH FAILED ({type(e).__name__}) -- NO CACHE, dropped"
+                    status = "missing"
+        meta[key] = {"fetched_at": fetched_at or None,
+                     "age_hours": round(max(0, now - fetched_at) / 3600, 1) if fetched_at else None,
+                     "status": status, "rows": len(data.get(key, {})),
+                     "note": notes[key]}
         if not quiet:
             print(f"  {key:8} {len(data.get(key, {})):4} {notes[key]}")
 
-    if any(k in data for k, _ in SOURCES):
-        CACHE.write_text(json.dumps(
-            {"fetched_at": time.time(), "data": data, "notes": notes,
-             "extras": extras}))
+    if cached:
+        CACHE.write_text(json.dumps({"version": 2, "sources": cached}))
+    global LAST_META
+    LAST_META = meta
     return data, notes, extras
 
 
 if __name__ == "__main__":
     print("fetching public half-PPR rankings...")
     d, n, x = load(refresh="--refresh" in sys.argv)
-    print(f"\n{len(d)} sources, {len(x)} FFC extras")
+    print(f"\n{len(d)} sources, {len(x)} source-extra groups")

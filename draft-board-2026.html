@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Half-PPR + Bonuses Draft Board — 2026</title>
+<title>Fantasy Draft Board — 2026</title>
 <style>
 
 :root{
@@ -15,11 +15,21 @@
   --sans:"Helvetica Neue",Inter,system-ui,-apple-system,sans-serif;}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-header{padding:22px 20px 0;max-width:1500px;margin:0 auto}
+header{padding:16px 20px 0;max-width:1500px;margin:0 auto}
 .kicker{font:600 10px/1.5 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--good);margin-bottom:10px}
 h1{margin:0;font:800 clamp(24px,4vw,38px)/1 var(--sans);letter-spacing:-.03em}
 h1 em{font-style:normal;color:var(--good)}
-.sub{margin:10px 0 0;max-width:70ch;color:var(--dim);font-size:13.5px;line-height:1.55}
+.sub{margin:8px 0 0;max-width:78ch;color:var(--dim);font-size:13.5px;line-height:1.55}
+.freshness{margin-top:10px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+font:10px/1 var(--mono);color:var(--dimmer);letter-spacing:.04em}
+.freshness b{color:var(--dim);font-weight:600}.srcstat{display:inline-flex;align-items:center;gap:4px}
+.srcstat:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--good)}
+.srcstat.stale:before,.srcstat.missing:before{background:var(--bad)}
+.srcstat.stale,.srcstat.missing{color:var(--bad)}
+.profile-switch{display:flex;align-items:center;gap:5px;margin-top:12px;flex-wrap:wrap}
+.profile-switch>span{font:600 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+color:var(--dimmer);margin-right:3px}.profile-btn{padding:6px 10px;background:var(--panel)}
+.profile-btn.on{color:#fff}.profile-caveat{font:10px/1.4 var(--mono);color:var(--warn);margin-left:5px}
 .note{margin:12px 0 0;max-width:70ch;font:11.5px/1.6 var(--mono);color:var(--dimmer);
 border-left:3px solid var(--warn);padding-left:11px}
 .rail{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.96);backdrop-filter:blur(10px);
@@ -71,7 +81,7 @@ padding:4px 5px;border-radius:2px;color:#0D1418}
 .fitbar i{position:absolute;top:0;height:100%;border-radius:1px}
 .fitbar .z{position:absolute;top:-2px;left:50%;width:1px;height:11px;background:var(--dimmer)}
 .fitn{font-weight:700;font-size:12.5px}
-.flags{margin-top:5px;display:flex;flex-direction:column;gap:3px;max-width:70ch}
+.flags{display:flex;flex-direction:column;gap:4px;max-width:76ch}
 .flag{font-family:var(--sans);font-size:11.5px;line-height:1.42;padding-left:15px;position:relative;color:var(--dim)}
 .flag:before{position:absolute;left:0;top:0;font:700 11px/1.45 var(--mono)}
 .fg:before{content:"+";color:var(--good)}.fr:before{content:"\2212";color:var(--bad)}
@@ -115,8 +125,8 @@ thead th{border-bottom:1px solid var(--line2)}
  font:10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
 
 /* ---- draft-day panels ---------------------------------------------------- */
-.decks{max-width:1500px;margin:0 auto;padding:18px 20px 4px;display:grid;gap:12px;
-grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.decks{max-width:1500px;margin:0 auto;padding:13px 20px 3px;display:grid;gap:10px;
+grid-template-columns:minmax(270px,.9fr) minmax(290px,1fr) minmax(340px,1.15fr)}
 .deck{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:12px 13px}
 .deck h4{margin:0 0 9px;font:600 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
 color:var(--dim);display:flex;justify-content:space-between;align-items:center}
@@ -128,7 +138,7 @@ color:var(--dim);display:flex;justify-content:space-between;align-items:center}
 .ba .r .num{font:11px/1 var(--mono);color:var(--dimmer);flex:none}
 .ba .r .num b{color:var(--good);font-weight:600}
 .ba .r.dim .who{color:var(--dimmer)}
-.slots{display:flex;flex-direction:column;gap:3px}
+.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:2px}
 .slot{display:flex;align-items:center;gap:8px;font:12px/1.4 var(--sans);
 border-bottom:1px dotted var(--line);padding:3px 0}
 .slot:last-child{border-bottom:0}
@@ -165,18 +175,36 @@ tr.hurt .nm{text-decoration:underline wavy var(--bad) 1px;text-underline-offset:
 color:var(--bad);border:1px solid var(--badbg);background:var(--badbg);border-radius:2px;padding:2px 4px}
 .pill.K{background:var(--k);color:var(--ki)}
 .pill.DST{background:var(--dst);color:var(--dsti)}
-</style><script src="board-data.js"></script>
+.needs{grid-column:1/-1;margin-top:4px;padding-top:6px;border-top:1px solid var(--line);
+font:9.5px/1.5 var(--mono);color:var(--dimmer);letter-spacing:.04em}
+.detail-btn{border:0;background:transparent;padding:2px 4px;margin-left:4px;color:var(--dimmer);
+font-size:12px;vertical-align:1px}.detail-btn:hover{color:var(--good);border:0}
+.detail-row{cursor:default;background:#F8F7F3}.detail-row:hover{background:#F8F7F3}
+.detail-row td{padding:8px 12px 12px 58px;white-space:normal;text-align:left}
+.detail-grid{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(320px,1.5fr);gap:18px}
+.signals{font:10.5px/1.75 var(--mono);color:var(--dim)}.signals b{color:var(--ink)}
+.section-label{font:700 8.5px/1.8 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+color:var(--dimmer);margin-top:5px}.section-label:first-child{margin-top:0}
+@media(max-width:980px){.decks{grid-template-columns:1fr 1fr}.deck-team{grid-column:1/-1}}
+@media(max-width:650px){.decks{grid-template-columns:1fr}.deck-team{grid-column:auto}.slots{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+</style><script>document.write('<script src="board-data.js?v='+Date.now()+'"><\/script>')</script>
 </head><body>
 
 <header>
-<div class="kicker">12 teams · QB/2RB/2WR/TE/W-R-T/W-T/K/DST · half PPR · 0.75 per TE catch · 100 &amp; 200 yard bonuses</div>
-<h1>Projections, four public boards, and <em>where they disagree</em>.</h1>
-<p class="sub">Blended from a projection model rescored for your exact scoring, four public
-half-PPR sources, and live injuries. <button id="info" class="ibtn" aria-expanded="false"
+<div class="kicker" id="league-summary">12 teams · QB/2RB/2WR/TE/W-R-T/W-T/K/DST · half PPR · 0.75 per TE catch · 100 &amp; 200 yard bonuses</div>
+<h1>Market ADP, expert rank, and <em>your league model</em>.</h1>
+<div class="profile-switch" id="profile-switch" role="group" aria-label="Ranking profile">
+ <span>Rank for</span><button class="profile-btn on" data-profile="sleeper">Sleeper league</button>
+ <button class="profile-btn" data-profile="dad">Dad's league</button><span class="profile-caveat" id="profile-caveat"></span>
+</div>
+<p class="sub" id="profile-sub">One draft call built from where half-PPR rooms are drafting, an independent
+expert board, your exact scoring, and live injuries. <button id="info" class="ibtn" aria-expanded="false"
 aria-controls="infopanel">How this works</button></p>
+<div class="freshness" id="freshness"><b>Data health</b></div>
 <div id="infopanel" class="ipanel" hidden>
+<div id="standard-method">
 <h3>What the rank is</h3>
-<p>Half projection model, half public consensus. The model takes
+<p>Half league model, half outside-information anchor. The model takes
 season projections and rescores them for this league: half PPR, <b>0.75 per catch for tight ends</b>
 (0.5 baseline plus your 0.25 premium), interceptions at <b>&minus;2</b>, and yardage bonuses of
 <b>+3 for a 100&ndash;199 yard game and +4 for 200+</b> (+3 at 300&ndash;399 and +4 at 400+ passing).
@@ -184,21 +212,17 @@ Those tiers are exclusive: a 210-yard game pays 4, not 7. Kickers use normal sco
 (3 under 40, 4 from 40&ndash;49, 5 from 50+). Those points are measured against
 replacement level for your 12-team roster — QB, 2RB, 2WR, TE, RB/WR/TE flex, WR/TE flex, K, DST — so
 value is scarcity-adjusted rather than raw points.</p>
+<h3>The three lanes</h3>
+<p><b>Market</b> answers when the room will draft him: FFC 12-team half-PPR ADP leads, with Yahoo
+half-PPR ADP alongside it. <b>Expert</b> is RotoBaller's free, expert-authored half-PPR overall Top
+100. <b>Sentiment</b> is FantasyCalc's format-exact redraft value and trend. The outside anchor is
+55% market, 30% expert and 15% sentiment, then blended 50/50 with this league's model. ESPN PPR ADP
+is shown only inside player details as useful platform context; it does not enter the half-PPR rank.</p>
 <h3>Why it isn't pure model</h3>
-<p>Every projection comes from a single source. Where that source is stingy, a pure model rank
-fought all four public boards on one source's opinion. So each player's average public rank is
-converted back into points using the model's own value curve, and the two are averaged. The
-<b>Model</b> column shows the unblended view; the distance between it and the rank is how far the
-crowd pulled him.</p>
-<h3>The four systems</h3>
-<p>All four are free public sources, pulled live at build time, and none of them is an editor's
-list — they are <b>what people actually did</b>. <b>FFC</b> is Fantasy Football Calculator's
-half-PPR 12-team ADP from thousands of public mock drafts, the only true ADP in this league's exact
-format, which is why it anchors the blend. <b>FCalc</b> is FantasyCalc's market value at half PPR /
-1QB / 12 teams — also format-exact, but priced off real league activity rather than mock drafts, so
-it is an independent read on the same question. ESPN and Yahoo are real ADP from their own drafts.
-Every system gives every
-player exactly one slot, so the spread plot is directly comparable across all four.</p>
+<p>Projections can be wrong about role, health, or touchdowns. The outside anchor keeps one
+projection disagreement from taking over the board, while the <b>Model</b> column keeps the league's
+TE premium and bonuses visible. <b>Edge</b> is the outside anchor minus this board's rank: positive
+means this board likes the player earlier than the room and expert signals do.</p>
 <h3>Tiers</h3>
 <p>Bands are drops in value, not even buckets. Viewing everyone shows overall tiers; filtering to a
 position switches the bands to that position's own tiers, which is what matters when you're deciding
@@ -208,6 +232,28 @@ whether to take the last back in a tier or wait a round.</p>
 than what he'd get if the starter went down — spend late picks on handcuffs regardless of what the
 board says. Deep bench players are smoothed across 17 games. And the board inherits its projection
 source's opinions; where you disagree, override it.</p>
+</div>
+<div id="dad-method" hidden>
+<h3>Dad's scoring profile</h3>
+<p>This view rescores the same projections for the supplied rules: <b>no ordinary PPR</b>, weekly
+passing-yard points every 75 yards, rushing points every 25, receiving points every 20, position-specific
+reception buckets, distance-based touchdowns, low-value field goals, half-point PATs, and the supplied
+defensive scoring. It uses the Dad roster: QB, 2RB, 2WR, TE, two RB/WR/TE flexes, K, DST, and eight bench.</p>
+<h3>What has to be estimated</h3>
+<p>Season projections do not include weekly distributions or touchdown distance. Weekly yardage and catch
+buckets are estimated with 40,000 simulated games per player. Touchdown-distance points use league-average
+distance distributions: this is the honest approximation, not a player-specific big-play forecast.
+Defensive fumble recoveries proxy for forced fumbles because the feeds do not project forced fumbles.</p>
+<h3>How the rank is blended</h3>
+<p>The custom model carries <b>65%</b> of the final rank because public boards are half-PPR and do not match
+these rules. The Dad <b>Market</b> number is the median of FFC, Yahoo, and FantasyCalc half-PPR signals,
+so one platform outlier cannot dominate it. That market consensus is combined with the independent expert
+board for the remaining 35%, preserving useful information about role, injuries, and draft timing. Kicker
+and defense still stay in the final rounds.</p>
+<h3>League size</h3>
+<p>This profile is calibrated for the confirmed <b>10-team</b> league. Replacement level fills all ten
+starting lineups, and the late-position floors follow an 18-round, 180-pick draft.</p>
+</div>
 <p class="stamp" id="stamp">Data as of —</p>
 </div>
 </header>
@@ -218,7 +264,7 @@ source's opinions; where you disagree, override it.</p>
   <div class="ba" id="bestavail"></div></div>
  <div class="deck"><h4>Value coming up <span id="v-note">2 per position · ↑ market rising</span></h4>
   <div class="ba" id="values"></div></div>
- <div class="deck"><h4>My team <span id="mt-note"></span></h4>
+ <div class="deck deck-team"><h4>My team <span id="mt-note"></span></h4>
   <div class="slots" id="myteam"></div></div>
 </div>
 
@@ -229,7 +275,7 @@ source's opinions; where you disagree, override it.</p>
 <button data-p="TE">TE</button><button data-p="FLEX">Flex</button><button data-p="K">K</button><button data-p="DST">DEF</button></div>
 <input id="q" type="search" placeholder="find a player" aria-label="Find a player">
 <button id="hb">Hide drafted</button>
-<span class="nplab">next pick</span><input id="np" type="number" min="1" max="200" placeholder="#" aria-label="My next pick number">
+<span class="nplab">next pick</span><input id="np" type="number" min="1" max="300" placeholder="#" aria-label="My next pick number">
 <span class="nplab">sleeper draft</span><input id="did" type="text" placeholder="draft id" aria-label="Sleeper draft id"><input id="slot" type="number" min="1" max="12" placeholder="slot" aria-label="My draft slot"><button id="sync">Sync off</button><span class="syncst" id="syncst"></span>
 <div class="spacer"></div>
 <div class="tally" id="tally"></div>
@@ -238,42 +284,31 @@ source's opinions; where you disagree, override it.</p>
 
 <div class="wrap"><table><thead><tr>
 <th class="l" data-s="rk">#<span class="ar"></span></th>
-<th class="l" data-s="p">Player &amp; flags<span class="ar"></span></th>
+<th class="l" data-s="p">Player<span class="ar"></span></th>
 <th class="l" data-s="pos">Pos<span class="ar"></span></th>
 <th class="hide-s" data-s="bye">Bye<span class="ar"></span></th>
-<th class="hide-s" data-s="lastp">Lasts<span class="ar"></span></th>
-<th class="grp" data-s="ffcr" title="Fantasy Football Calculator: real half-PPR, 12-team ADP from thousands of live mock drafts. Exactly this league's format.">FFC<span class="ar"></span></th>
-<th class="grp" data-s="fcalcr" title="FantasyCalc market value at half PPR / 1QB / 12 teams -- exactly this league's format.">FCalc<span class="ar"></span></th>
-<th class="grp" data-s="espnr" title="ESPN average draft position across ESPN drafts.">ESPN<span class="ar"></span></th>
-<th class="grp" data-s="yahoor" title="Yahoo average pick. Yahoo's default league scoring is 0.5 per reception.">Yahoo<span class="ar"></span></th>
-<th data-s="avg">Avg<span class="ar"></span></th>
-<th class="hide-m" data-s="spread">Where they land<span class="ar"></span></th>
+<th class="hide-s" data-s="lastp" id="lasts-th">Lasts<span class="ar"></span></th>
+<th class="grp" data-s="market" title="Half-PPR draft market: FFC weighted 2, Yahoo weighted 1.">Market<span class="ar"></span></th>
+<th class="grp" data-s="expert_lane" title="RotoBaller free expert half-PPR overall Top 100.">Expert<span class="ar"></span></th>
 <th class="hide-s" data-s="model" title="Where the projection alone ranks him, ignoring every public board. Far above his Avg means the projection likes him more than the room does.">Model<span class="ar"></span></th>
-<th data-s="gap" title="Average public rank minus his rank here. Positive means the room should let him fall to you.">Gap<span class="ar"></span></th>
+<th data-s="gap" title="Outside-information anchor minus this board's rank. Positive means a potential discount.">Edge<span class="ar"></span></th>
 </tr></thead><tbody id="rows"></tbody></table>
 <p class="hint">
-FFC / FCalc / ESPN / Yahoo, densely re-ranked to one slot per player, and weighted
-<b>2 / 1.5 / 1 / 1</b> rather than averaged flat. The two format-exact sources lead: <b>FFC is
-half-PPR 12-team ADP</b> from thousands of live mock drafts, and <b>FCalc is half-PPR / 1QB / 12-team
-market value</b>. Yahoo is average pick at their default 0.5/reception; ESPN is average draft
-position across ESPN drafts. Avg = that weighted mean (NR excluded). Sleeper is not a column — what
-they publish is search popularity, not ADP.<br>
+<span id="profile-hint"><b>Market</b> = FFC and Yahoo half-PPR ADP. <b>Expert</b> = RotoBaller's free expert half-PPR
+Top 100. <b>Model</b> = this league's projection-only rank.</span> Open the small detail button by a
+player to see source context and scoring detail.<br>
 Injury tags come live from Sleeper. <b>IR / PUP / Out / Doubtful / Sus</b> players are struck through
 and kept out of the value panel — cheap for a reason is not the same as cheap.
-Where they land = each system plotted against their average, window &plusmn;40 slots<span class="key d-ffc"></span>FFC<span class="key d-fc"></span>FCalc<span class="key d-espn"></span>ESPN<span class="key d-yh"></span>Yahoo. A wide plot means nobody agrees, which is where the value hides.<br>
-<b>Model</b> = where the projection alone ranks him, with every public board ignored. It is the
-half of this board that isn't just aggregated ADP: season projections rescored for your exact scoring
-(0.75/catch TE, the yardage bonuses), then measured against replacement level at each position. When
-Model sits far above his Avg, the projection likes him more than the room does — and his rank here
-lands between the two. <b>Gap</b> = average public rank minus his rank here; positive means the room
-should let him fall to you.<br>
-Badges: <b>SLEEPER</b> = going 25+ slots later on Sleeper than he ranks here, outside the top 75.
-<b>VALUE</b> = 18+ slots of edge on the public average. <b>FADE</b> = 18+ slots the other way.<br>
+<b>Edge</b> = outside anchor minus board rank; positive means a potential discount.<br>
+Badges: <b>SLEEPER</b> = FFC ADP is 25+ slots later than this board outside the top 75.
+<b>VALUE</b> = 18+ slots of edge on the outside anchor. <b>FADE</b> = 18+ slots the other way.<br>
 Tiers are drops in value over replacement, not even buckets. Positional tier is under the position chip.
 </p></div>
 
 <script>
-const DATA = window.BOARD_DATA || [];
+const PROFILES = window.BOARD_PROFILES || {sleeper:window.BOARD_DATA||[]};
+let PROFILE = "sleeper";
+let DATA = PROFILES.sleeper || [];
 // Statuses that mean he is not a startable asset right now. Live from Sleeper.
 const INJ_BAD = new Set(["IR","PUP","Out","Sus","NA","DNR","Doubtful"]);
 function injBadge(x){
@@ -281,31 +316,74 @@ function injBadge(x){
  const bad = INJ_BAD.has(x.inj);
  const body = x.injbody && x.injbody!=="Undisclosed" ? " "+x.injbody : "";
  return `<span class="inj ${bad?"bad":"warn"}" title="Sleeper injury status${body}">${x.inj}${bad&&body?body:""}</span>`;}
-const S={pos:"ALL",q:"",sort:"rk",dir:1,hide:false,gone:new Set(),mine:new Set(),np:null};
-const KEY="hp_board_v7";
-const OLDKEY="hp_board_v6";   // v6 stored a bare array of drafted ranks
+const pid=x=>x.pos==="DST"?`DST:${x.tm}`:`${x.p}|${x.tm}`;
+const atRank=r=>DATA.find(x=>x.rk===+r);
+const ids=a=>(a||[]).map(v=>typeof v==="number"?pid(atRank(v)||{p:"missing",tm:v,pos:""}):v)
+ .filter(v=>!v.startsWith("missing|"));
+const S={pos:"ALL",q:"",sort:"rk",dir:1,hide:false,gone:new Set(),mine:new Set(),open:new Set(),np:null};
+const KEY="hp_board_v8";
+const OLDKEY="hp_board_v7";   // v7 stored changing rank numbers instead of stable player ids
 // window.storage exists inside Claude; localStorage is the fallback when this
 // file is opened straight off disk. Try both so draft state survives either way.
 async function load(){
   let raw=null;
+  let wantedProfile="sleeper";
   try{ if(window.storage){const r=await window.storage.get(KEY); if(r&&r.value) raw=r.value;} }catch(e){}
   if(raw===null){ try{ raw=localStorage.getItem(KEY); }catch(e){} }
   if(raw===null){ try{ raw=localStorage.getItem(OLDKEY); }catch(e){} }
   if(raw){ try{
     const v=JSON.parse(raw);
-    if(Array.isArray(v)){ S.gone=new Set(v); }                 // v6 shape
-    else { S.gone=new Set(v.gone||[]); S.mine=new Set(v.mine||[]); S.np=v.np??null; S.draft=v.draft||null; }
+    if(Array.isArray(v)){ S.gone=new Set(ids(v)); }
+    else { S.gone=new Set(ids(v.gone)); S.mine=new Set(ids(v.mine)); S.np=v.np??null;
+           S.draft=v.draft||null; wantedProfile=v.profile||"sleeper"; }
   }catch(e){} }
   const npEl=document.getElementById("np");
   if(npEl&&S.np) npEl.value=S.np;
   if(S.draft){ document.getElementById("did").value=S.draft.did||"";
                document.getElementById("slot").value=S.draft.slot||""; }
+  applyProfile(wantedProfile);
   render();
 }
 async function save(){
-  const v=JSON.stringify({gone:[...S.gone],mine:[...S.mine],np:S.np,draft:S.draft||null});
+  const v=JSON.stringify({gone:[...S.gone],mine:[...S.mine],np:S.np,
+                          draft:S.draft||null,profile:PROFILE});
   try{ if(window.storage) await window.storage.set(KEY,v); }catch(e){}
   try{ localStorage.setItem(KEY,v); }catch(e){}
+}
+const PROFILE_COPY={
+ sleeper:{summary:"12 teams · QB/2RB/2WR/TE/W-R-T/W-T/K/DST · half PPR · 0.75 per TE catch · 100 & 200 yard bonuses",
+  sub:"One draft call built from where half-PPR rooms are drafting, an independent expert board, your exact scoring, and live injuries.",
+  hint:"<b>Market</b> = FFC and Yahoo half-PPR ADP. <b>Expert</b> = RotoBaller's free expert half-PPR Top 100. <b>Model</b> = the Sleeper league projection-only rank.",caveat:""},
+ dad:{summary:"Dad's league · 10 teams · QB/2RB/2WR/TE/2 FLEX/K/DST · 8 bench · weekly scoring buckets",
+  sub:"The same draft guide, rescored for Dad's yardage buckets, reception tiers, touchdown distance, roster, and defensive rules.",
+  hint:"<b>Market</b> is Dad's outlier-resistant median of FFC, Yahoo, and FantasyCalc half-PPR signals. <b>Model</b> is Dad's custom scoring and carries 65% of the final rank.",
+  caveat:"10 teams · 18 rounds"}
+};
+const PROFILE_TEAMS={sleeper:12,dad:10};
+// Lasts is derived from FFC's half-PPR 12-team ADP dispersion. For the Sleeper
+// profile that is exactly the right room. For Dad's it is the only ADP that
+// exists -- nobody publishes ADP for weekly-bucket scoring -- so the column is
+// a rough read there, and says so rather than implying a measured probability.
+const LASTS_TITLE={
+ sleeper:"Chance he is still on the board at your next pick, from FFC's real half-PPR 12-team ADP and its per-player dispersion.",
+ dad:"ROUGH for Dad's league. Derived from FFC half-PPR 12-team ADP, because no ADP exists for weekly-bucket scoring. Use it for ordering, not as a real probability."};
+function applyProfile(profile){
+ if(!PROFILES[profile])profile="sleeper";
+ PROFILE=profile; DATA=PROFILES[profile]; NIDX=null; S.open.clear();
+ const c=PROFILE_COPY[profile];
+ const lth=document.getElementById("lasts-th");
+ if(lth){ lth.title=LASTS_TITLE[profile]||"";
+          lth.firstChild.textContent = profile==="dad" ? "Lasts*" : "Lasts"; }
+ document.documentElement.dataset.profile=profile;
+ document.getElementById("league-summary").textContent=c.summary;
+ const sub=document.getElementById("profile-sub"), info=document.getElementById("info");
+ sub.textContent=c.sub+" "; sub.appendChild(info);
+ document.getElementById("profile-hint").innerHTML=c.hint;
+ document.getElementById("profile-caveat").textContent=c.caveat;
+ document.getElementById("slot").max=String(PROFILE_TEAMS[profile]);
+ document.getElementById("standard-method").toggleAttribute("hidden",profile!=="sleeper");
+ document.getElementById("dad-method").toggleAttribute("hidden",profile!=="dad");
+ document.querySelectorAll("[data-profile]").forEach(b=>b.classList.toggle("on",b.dataset.profile===profile));
 }
 const i0=v=>v==null?"—":Math.round(v);
 const n1=v=>v==null?"—":(Math.round(v*10)/10).toFixed(1);
@@ -335,7 +413,7 @@ function visible(){
  let out=DATA.filter(x=>{
   if(S.pos==="FLEX"){if(!["RB","WR","TE"].includes(x.pos))return false;}
   else if(S.pos!=="ALL"&&x.pos!==S.pos)return false;
-  if(S.hide&&S.gone.has(x.rk))return false;
+  if(S.hide&&S.gone.has(pid(x)))return false;
   if(S.q&&!(x.p+" "+x.tm).toLowerCase().includes(S.q))return false;
   return true;});
  const k=S.sort;
@@ -347,21 +425,24 @@ function visible(){
  return out;}
 
 // ---- draft-day decks ------------------------------------------------------
-const ROSTER=[["QB",["QB"]],["RB",["RB"]],["RB",["RB"]],["WR",["WR"]],["WR",["WR"]],
- ["TE",["TE"]],["W/R/T",["RB","WR","TE"]],["W/T",["WR","TE"]],["K",["K"]],["DEF",["DST"]]];
-const BENCH=6;
-function avail(){return DATA.filter(x=>!S.gone.has(x.rk));}
+const ROSTERS={
+ sleeper:[["QB",["QB"]],["RB",["RB"]],["RB",["RB"]],["WR",["WR"]],["WR",["WR"]],
+  ["TE",["TE"]],["W/R/T",["RB","WR","TE"]],["W/T",["WR","TE"]],["K",["K"]],["DEF",["DST"]]],
+ dad:[["QB",["QB"]],["RB",["RB"]],["RB",["RB"]],["WR",["WR"]],["WR",["WR"]],
+  ["TE",["TE"]],["FLEX",["RB","WR","TE"]],["FLEX",["RB","WR","TE"]],["K",["K"]],["DEF",["DST"]]]
+};
+function avail(){return DATA.filter(x=>!S.gone.has(pid(x)));}
 function row(x,extra){
  return `<div class="r"><span class="pill ${x.pos}">${x.pos}</span>`+
   `<span class="who">${x.p}</span><span class="num">${extra}</span></div>`;}
 
 function renderDecks(){
  const av=avail();
- // Best available: the top of the board, plus the best left at each position.
+ // Best available: the top of the board, plus the best left at each skill position.
  const top=av.slice(0,5);
  let h=top.map(x=>row(x,`#<b>${x.rk}</b>`+(INJ_BAD.has(x.inj)?` <span class="rise">${x.inj}</span>`:""))).join("");
  const seen=new Set(top.map(x=>x.p));
- for(const pos of ["QB","RB","WR","TE","K","DST"]){
+ for(const pos of ["QB","RB","WR","TE"]){
   const b=av.find(x=>x.pos===pos);
   if(b&&!seen.has(b.p))h+=`<div class="r dim"><span class="pill ${b.pos}">${b.pos}</span>`+
    `<span class="who">${b.p}</span><span class="num">#${b.rk}</span></div>`;}
@@ -387,7 +468,8 @@ function renderDecks(){
  // Someone on IR/PUP is cheap for a reason -- he'd top this list every time and
  // he is a trap, not a bargain. Excluded outright.
  const scored=av.filter(x=>["QB","RB","WR","TE"].includes(x.pos)
-              &&!INJ_BAD.has(x.inj)&&x.gap!=null&&x.gap>=6&&near(x))
+              &&!INJ_BAD.has(x.inj)&&x.nsrc>=2&&x.market!=null
+              &&x.gap!=null&&x.gap>=6&&near(x))
               .map(x=>({x,s:x.gap+hot(x)*8}))
               .sort((a,b)=>b.s-a.s);
  const seenPos={}; const vals=[];
@@ -395,30 +477,38 @@ function renderDecks(){
   const q=seenPos[o.x.pos]||0;
   if(q>=CAPPOS)continue;
   seenPos[o.x.pos]=q+1; vals.push(o.x);
-  if(vals.length>=8)break;}
- document.getElementById("values").innerHTML=
-  vals.map(x=>row(x,`#${x.rk} <b>+${x.gap}</b>`
-   +(x.trend>=40?' <span class="rise">\u2191</span>':x.trend<=-40?' <span class="fall">\u2193</span>':""))).join("")
-  ||'<div class="r dim">'+(S.np?"Nothing in range of pick "+S.np+".":"Nothing stands out right now.")+'</div>';
+  if(vals.length>=6)break;}
+ const valueRows=list=>list.map(x=>row(x,`#${x.rk} <b>+${x.gap}</b>`
+   +(x.trend>=40?' <span class="rise">\u2191</span>':x.trend<=-40?' <span class="fall">\u2193</span>':""))).join("");
+ let vh="";
+ if(S.np!=null&&vals.length){
+  const now=vals.filter(x=>(lastsP(x)??0)<=.55), wait=vals.filter(x=>(lastsP(x)??0)>.55);
+  if(now.length)vh+=`<div class="section-label">Take now</div>${valueRows(now)}`;
+  if(wait.length)vh+=`<div class="section-label">Likely lasts to ${S.np}</div>${valueRows(wait)}`;
+ }else if(vals.length){
+  vh=`<div class="section-label">Best discounts · set next pick for timing</div>${valueRows(vals)}`;
+ }
+ document.getElementById("values").innerHTML=vh||'<div class="r dim">'+
+  (S.np?"Nothing in range of pick "+S.np+".":"Nothing stands out right now.")+'</div>';
 
  // My team: greedy fill, dedicated slots first, then flex, then bench.
- const mine=DATA.filter(x=>S.mine.has(x.rk)).sort((a,b)=>a.rk-b.rk);
+ const mine=DATA.filter(x=>S.mine.has(pid(x))).sort((a,b)=>a.rk-b.rk);
  const used=new Set(); let hh="";
  const take=elig=>{
   for(const m of mine){ if(!used.has(m.rk)&&elig.includes(m.pos)){used.add(m.rk);return m;} }
   return null;};
- const filled=ROSTER.map(([lb,elig])=>[lb,elig.length===1?take(elig):null]);
- filled.forEach((f,i)=>{ if(!f[1]&&ROSTER[i][1].length>1) f[1]=take(ROSTER[i][1]); });
- for(const [lb,m] of filled)
-  hh+=`<div class="slot"><span class="lb">${lb}</span>`+
-   (m?`<span class="fill">${m.p}</span><span class="bye">${m.bye||"—"}</span>`
-     :`<span class="fill em">empty</span><span class="bye"></span>`)+`</div>`;
+ const roster=ROSTERS[PROFILE];
+ const filled=roster.map(([lb,elig])=>[lb,elig.length===1?take(elig):null]);
+ filled.forEach((f,i)=>{ if(!f[1]&&roster[i][1].length>1) f[1]=take(roster[i][1]); });
+ for(const [lb,m] of filled){if(m)
+  hh+=`<div class="slot"><span class="lb">${lb}</span><span class="fill">${m.p}</span><span class="bye">${m.bye||"—"}</span></div>`;}
  const bench=mine.filter(m=>!used.has(m.rk));
- for(let i=0;i<Math.max(BENCH,bench.length);i++){
-  const m=bench[i];
-  hh+=`<div class="slot bn"><span class="lb">BN</span>`+
-   (m?`<span class="fill">${m.p}</span><span class="bye">${m.bye||"—"}</span>`
-     :`<span class="fill em">empty</span><span class="bye"></span>`)+`</div>`;}
+ for(const m of bench)
+  hh+=`<div class="slot bn"><span class="lb">BN</span><span class="fill">${m.p}</span><span class="bye">${m.bye||"—"}</span></div>`;
+ const count=p=>mine.filter(x=>x.pos===p).length;
+ const needs=[["QB",1],["RB",2],["WR",2],["TE",1]].map(([p,n])=>`${p} ${Math.max(0,n-count(p))}`).join(" · ");
+ hh+=mine.length?`<div class="needs">Base needs · ${needs} · flexes fill as you draft</div>`:
+  '<div class="r dim">Your picks appear here. Use + or Sleeper sync.</div>';
  document.getElementById("myteam").innerHTML=hh;
  const byes={};mine.forEach(m=>{if(m.bye)byes[m.bye]=(byes[m.bye]||0)+1;});
  const clash=Object.entries(byes).filter(([,n])=>n>=3).map(([w,n])=>`wk${w}×${n}`);
@@ -429,7 +519,6 @@ function renderDecks(){
 // ---- Sleeper live-draft sync ---------------------------------------------
 // The draft picks endpoint is public and needs no auth. Poll it and cross
 // players off automatically instead of tapping every row.
-const TEAMS_N=12;
 function jnorm(n){let t=(n||"").toLowerCase().replace(/[.'`]/g,"").replace(/\s+/g," ").trim();
  return t.replace(/\s(jr|sr|ii|iii|iv)$/,"").trim();}
 let NIDX=null;
@@ -449,8 +538,10 @@ function matchPick(pk){
  return idx.get(full)||null;}
 // Snake order: my next overall pick given how many are already in.
 function nextSnakePick(made,slot){
- for(let r=1;r<=20;r++){
-  const o=(r%2===1)?(r-1)*TEAMS_N+slot:(r-1)*TEAMS_N+(TEAMS_N-slot+1);
+ const teams=PROFILE_TEAMS[PROFILE], rounds=window.BOARD_META?.profiles?.[PROFILE]?.rounds||20;
+ if(slot<1||slot>teams)return null;
+ for(let r=1;r<=rounds;r++){
+  const o=(r%2===1)?(r-1)*teams+slot:(r-1)*teams+(teams-slot+1);
   if(o>made)return o;}
  return null;}
 let syncTimer=null, syncBusy=false, syncFails=0;
@@ -470,8 +561,8 @@ async function pollDraft(){
   for(const pk of picks){
    const m=matchPick(pk);
    if(!m){miss++;continue;}
-   hit++; S.gone.add(m.rk);
-   if(slot&&pk.draft_slot===slot)S.mine.add(m.rk);}
+   hit++; S.gone.add(pid(m));
+   if(slot&&pk.draft_slot===slot)S.mine.add(pid(m));}
   if(slot){const np=nextSnakePick(picks.length,slot);
    if(np){S.np=np;document.getElementById("np").value=np;}}
   syncFails=0;
@@ -498,46 +589,64 @@ function render(){
  for(const x of list){
   if(bands&&x[tkey]!==tier){tier=x[tkey];
    const lbl=tier?((single?S.pos+" tier ":"Tier ")+tier):"Unprojected";
-   h+=`<tr class="tr"><td colspan="13"><div class="trl">${lbl}</div></td></tr>`;}
-  const d=S.gone.has(x.rk); const mineRow=S.mine.has(x.rk); const hurt=INJ_BAD.has(x.inj);
+   h+=`<tr class="tr"><td colspan="9"><div class="trl">${lbl}</div></td></tr>`;}
+  const id=pid(x), d=S.gone.has(id); const mineRow=S.mine.has(id); const hurt=INJ_BAD.has(x.inj);
   const gC=x.gap==null?"flat":x.gap>=12?"up":x.gap<=-12?"dn":"flat";
   const gV=x.gap==null?"—":(x.gap>0?"+":"")+x.gap;
   h+=`<tr class="${d?"gone":""} ${mineRow?"mine":""} ${hurt?"hurt":""}" data-rk="${x.rk}">
    <td class="l rk">${x.rk}</td>
-   <td class="l"><span class="nm">${x.p}</span><span class="tm">${x.tm}</span><button class="mine-btn" data-mine="${x.rk}" title="I drafted him">+</button>${
+   <td class="l"><span class="nm">${x.p}</span><span class="tm">${x.tm}</span><button class="mine-btn" data-mine="${x.rk}" title="I drafted him">+</button><button class="detail-btn" data-detail="${x.rk}" title="Player details" aria-label="Details for ${x.p}">ⓘ</button>${
    x.tag2?`<span class="badge b-${x.tag2}">${x.tag2}</span>`:""}${
-   x.mktnote?`<span class="mkn">${x.mktnote}</span>`:""}${x.trend!=null&&x.trend>=40?`<span class="trend">RISING</span>`:""}${injBadge(x)}
-    <div class="flags"><div class="flag fg">${x.g}</div><div class="flag fr">${x.r}</div></div></td>
+   x.mktnote?`<span class="mkn">${x.mktnote}</span>`:""}${x.trend!=null&&x.trend>=40?`<span class="trend">RISING</span>`:""}${injBadge(x)}</td>
    <td class="l"><span class="pill ${x.pos}">${x.pos}</span>
     <span class="ptier">${x.ptier?(x.pos+" t"+x.ptier):"&nbsp;"}</span></td>
    <td class="hide-s flat">${x.bye||"—"}</td>
    <td class="hide-s lasts">${lastsCell(x)}</td>
-   <td class="site">${x.ffcr==null?'<span class="flat">NR</span>':i0(x.ffcr)}</td>
-   <td class="site">${x.fcalcr==null?'<span class="flat">NR</span>':i0(x.fcalcr)}</td>
-   <td class="site">${x.espnr==null?'<span class="flat">NR</span>':i0(x.espnr)}</td>
-   <td class="site">${x.yahoor==null?'<span class="flat">NR</span>':i0(x.yahoor)}</td>
-   <td class="avg">${n1(x.avg)}</td>
-   <td class="hide-m">${dots(x)}</td>
+   <td class="avg">${n1(x.market)}</td>
+   <td class="site">${x.expert_lane==null?'<span class="flat">NR</span>':i0(x.expert_lane)}</td>
    <td class="hide-s flat">${x.model==null?"—":x.model}</td>
    <td class="${gC}">${gV}</td>
-</tr>`;}
- document.getElementById("rows").innerHTML=h||`<tr><td colspan="13" class="empty">Nobody left matching that.</td></tr>`;
- const left=p=>DATA.filter(x=>x.pos===p&&!S.gone.has(x.rk)).length;
+</tr>`;
+  if(S.open.has(x.rk)){
+   const dp=x.dad_parts||{};
+   const scoring=PROFILE==="dad"?`<div class="signals"><b>Dad scoring estimate</b> ${n1(dp.total)} pts · model #${i0(x.model)}<br>
+    Yard buckets ${n1(dp.yard_buckets)} · reception buckets ${n1(dp.reception_buckets)}<br>
+    TD-distance estimate ${n1(dp.touchdown_distance)} · other ${n1(dp.other)}<br>
+    <b>Half-PPR timing context</b> ${n1(x.market)} · Expert ${i0(x.expert_lane)} · anchor ${n1(x.anchor)}<br>
+    Source ranks: FFC ${i0(x.ffcr)} · Yahoo ${i0(x.yahoor)} · FantasyCalc ${i0(x.fcalcr)}</div>
+    <div class="flags"><div class="flag fg">Weekly yardage and catch thresholds are simulated from this player's projected volume.</div>
+    <div class="flag fr">Touchdown distance uses a league-average distribution; it is not a player-specific long-TD prediction.</div></div>`:
+    `<div class="signals"><b>Half-PPR market</b> ${n1(x.market)} · FFC ${i0(x.ffcr)} · Yahoo ${i0(x.yahoor)}<br>
+    <b>Expert</b> ${i0(x.expert_lane)} · <b>FantasyCalc value</b> ${i0(x.fcalcr)}<br>
+    <b>ESPN PPR context</b> ${i0(x.espnr)} · <b>Decision anchor</b> ${n1(x.anchor)} · ${x.nsrc} signals</div>
+   <div class="flags"><div class="flag fg">${x.g||"No additional upside note."}</div><div class="flag fr">${x.r||"No additional risk note."}</div></div>`;
+   h+=`<tr class="detail-row"><td colspan="9"><div class="detail-grid">${scoring}</div></td></tr>`;}
+ }
+ document.getElementById("rows").innerHTML=h||`<tr><td colspan="9" class="empty">Nobody left matching that.</td></tr>`;
+ const left=p=>DATA.filter(x=>x.pos===p&&!S.gone.has(pid(x))).length;
  document.getElementById("tally").innerHTML=`<b>${S.gone.size}</b> drafted · <b>${S.mine.size}</b> mine · left: `+
   ["QB","RB","WR","TE","K","DST"].map(p=>`${p==="DST"?"DEF":p} <b>${left(p)}</b>`).join(" · ");
  renderDecks();}
 document.getElementById("rows").addEventListener("click",e=>{
+ const db=e.target.closest("[data-detail]");
+ if(db){const rk=+db.dataset.detail;S.open.has(rk)?S.open.delete(rk):S.open.add(rk);render();return;}
  const mb=e.target.closest("[data-mine]");
- if(mb){ const rk=+mb.dataset.mine;
-  if(S.mine.has(rk)){S.mine.delete(rk);S.gone.delete(rk);}
-  else{S.mine.add(rk);S.gone.add(rk);}        // my pick is also off the board
+ if(mb){ const x=atRank(+mb.dataset.mine), id=pid(x);
+  if(S.mine.has(id)){S.mine.delete(id);S.gone.delete(id);}
+  else{S.mine.add(id);S.gone.add(id);}        // my pick is also off the board
   save();render();return;}
- const tr=e.target.closest("tr[data-rk]");if(!tr)return;const rk=+tr.dataset.rk;
- if(S.gone.has(rk)){S.gone.delete(rk);S.mine.delete(rk);}else{S.gone.add(rk);}
+ const tr=e.target.closest("tr[data-rk]");if(!tr)return;const x=atRank(+tr.dataset.rk),id=pid(x);
+ if(S.gone.has(id)){S.gone.delete(id);S.mine.delete(id);}else{S.gone.add(id);}
  save();render();});
 document.getElementById("posf").addEventListener("click",e=>{
  const b=e.target.closest("button");if(!b)return;S.pos=b.dataset.p;
  [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));render();});
+document.getElementById("profile-switch").addEventListener("click",e=>{
+ const b=e.target.closest("[data-profile]");if(!b||b.dataset.profile===PROFILE)return;
+ applyProfile(b.dataset.profile);S.pos="ALL";S.sort="rk";S.dir=1;
+ document.querySelectorAll("#posf button").forEach(x=>x.classList.toggle("on",x.dataset.p==="ALL"));
+ document.querySelectorAll("thead th").forEach(x=>{x.classList.remove("sorted");x.querySelector(".ar").textContent="";});
+ save();render();});
 document.querySelectorAll("thead th").forEach(th=>{th.addEventListener("click",()=>{
  const k=th.dataset.s;
  if(S.sort===k)S.dir*=-1;else{S.sort=k;S.dir=["spread","gap","lastp","vor","trend"].includes(k)?-1:1;}
@@ -554,7 +663,7 @@ document.getElementById("np").addEventListener("input",e=>{
 document.getElementById("q").addEventListener("input",e=>{S.q=e.target.value.trim().toLowerCase();render();});
 document.getElementById("hb").addEventListener("click",e=>{S.hide=!S.hide;
  e.target.classList.toggle("on",S.hide);e.target.textContent=S.hide?"Show everyone":"Hide drafted";render();});
-document.getElementById("rs").addEventListener("click",()=>{S.gone.clear();S.mine.clear();S.hide=false;
+document.getElementById("rs").addEventListener("click",()=>{S.gone.clear();S.mine.clear();S.open.clear();S.hide=false;
  const b=document.getElementById("hb");b.classList.remove("on");b.textContent="Hide drafted";save();render();});
 document.getElementById("info").addEventListener("click",e=>{
  const p=document.getElementById("infopanel"), open=p.hasAttribute("hidden");
@@ -565,9 +674,18 @@ document.getElementById("info").addEventListener("click",e=>{
   const m = window.BOARD_META || {};
   const s = document.getElementById("stamp");
   if(s && m.generated) s.textContent = "Data as of " + m.generated;
+  const fh=document.getElementById("freshness"), labels={ffc:"FFC",yahoo:"Yahoo",
+   rotoballer:"Experts",fcalc:"FCalc",injuries:"Injuries"};
+  if(fh&&m.sources){
+   for(const [key,label] of Object.entries(labels)){
+    const q=m.sources[key];if(!q)continue;
+    const age=q.age_hours==null?"unknown":q.age_hours<.2?"now":q.age_hours+"h";
+    fh.insertAdjacentHTML("beforeend",`<span class="srcstat ${q.status}">${label} ${age}</span>`);
+   }
+  }
   if(!window.BOARD_DATA){
     document.getElementById("rows").innerHTML =
-      '<tr><td colspan="13" class="empty">board-data.js not found \u2014 it must sit in the same folder as this file.</td></tr>';
+      '<tr><td colspan="9" class="empty">board-data.js not found \u2014 it must sit in the same folder as this file.</td></tr>';
   }
 })();
 load();

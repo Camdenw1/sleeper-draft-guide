@@ -82,7 +82,7 @@ RB = [
  ("Kenneth Gainwell","TB",95,100,439,3,37,275,2,1.00),
  ("Alvin Kamara","NO",148,113,428,2,34,235,2,1.00),
  ("Woody Marks","HOU",127,135,527,2,27,214,1,1.00),
- ("Zach Charbonnet","SEA",123,128,537,3,19,135,1,1.00),
+ ("Zach Charbonnet","SEA",123,128,537,3,19,135,1,0.00), # PUP: ACL recovery
  ("Tyjae Spears","TEN",134,86,344,2,38,255,1,1.00),
  ("Dylan Sampson","CLE",155,61,245,1,40,316,2,1.00),
  ("Chris Rodriguez Jr.","JAC",139,129,556,4,10,76,0,1.00),
@@ -108,7 +108,7 @@ RB = [
  ("Jaydon Blue","DAL",201,61,224,1,11,71,0,1.00),
  ("Emmett Johnson","KC",171,48,186,1,11,77,0,1.00),
  ("James Conner","ARI",158,36,142,1,8,68,0,1.00),
- ("Trey Benson","ARI",196,23,100,0,0,0,0,1.00),
+ ("Trey Benson","ARI",196,23,100,0,0,0,0,0.00), # IR: not a 2026 draft asset
 ]
 
 # WR: name, team, adp, rec, reYd, reTD, ruAtt, ruYd, ruTD, avail
@@ -146,7 +146,7 @@ WR = [
  ("Marvin Harrison Jr.","ARI",81,64,933,6,0,0,0,1.00),
  ("Courtland Sutton","DEN",74,63,848,7,0,0,0,1.00),
  ("Michael Pittman Jr.","PIT",104,76,877,5,0,0,0,1.00),
- ("Alec Pierce","IND",92,60,917,5,0,0,0,1.00),
+ ("Alec Pierce","IND",92,60,917,5,0,0,0,0.90), # PUP ankle: modest missed-time discount
  ("Jayden Reed","GB",121,66,815,5,11,68,0,1.00),
  ("Carnell Tate","TEN",66,65,867,5,0,0,0,1.00),
  ("Jakobi Meyers","JAC",91,67,782,5,3,19,0,1.00),

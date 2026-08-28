@@ -10,12 +10,14 @@ Run this twice: **Aug 28** and **Sept 8** (the day before the draft).
 
 Edit files in `refresh/` only. **Never edit `draft-board-2026.html` during a refresh** —
 that file is hand-tuned presentation and the whole architecture exists to protect it.
-`board-data.js` and `rankings.csv` are generated; overwrite them freely.
+`board-data.js` and `rankings.csv` are generated; overwrite them freely. The data
+file contains both `sleeper` and `dad` profiles.
 
 ## What is automatic now, and what still needs you
 
-Most of the data refreshes itself. `refresh/sources.py` pulls **seven live feeds** on
-every build — four ranking sources, live injuries, and two projection feeds — so
+Most of the data refreshes itself. `refresh/sources.py` pulls **eight live feeds** on
+every build — half-PPR ADP, an expert board, market sentiment, ESPN PPR context,
+live injuries, and two projection feeds — so
 there is nothing to paste for any of them.
 
 That leaves exactly two things that are genuinely hand-maintained, and they are the
@@ -60,8 +62,9 @@ off no longer swings a ranking on its own.
 
 ## 2. The live feeds — nothing to paste, but check they landed
 
-`refresh/sources.py` fetches all of these, cached six hours in
-`pubranks_cache.json`. Force a fresh pull with:
+`refresh/sources.py` fetches all of these, cached **per source** for six hours in
+`pubranks_cache.json`. A failed source keeps its original successful-fetch time;
+stale data is never restamped as fresh. Force a fresh pull with:
 
 ```bash
 python3 refresh/sources.py --refresh
@@ -70,9 +73,10 @@ python3 refresh/sources.py --refresh
 | Feed | What it gives |
 |---|---|
 | `ffc` | **Half-PPR 12-team ADP** from thousands of live mock drafts — the anchor |
-| `fcalc` | FantasyCalc value at half PPR / 1QB / 12 teams — also format-exact |
 | `yahoo` | Yahoo average pick (their default is 0.5/reception) |
-| `espn` | ESPN average draft position |
+| `rotoballer` | Free, expert-authored **half-PPR overall Top 100** — the expert lane |
+| `fcalc` | FantasyCalc value/trend at half PPR / 1QB / 12 teams — sentiment, not ADP |
+| `espn` | ESPN **PPR** ADP — context only, excluded from the half-PPR blend |
 | `injuries` | Live injury status + body part, from Sleeper's player dump |
 | `espnproj` | ESPN's own season projections (fractional TDs) |
 | `sleeperproj` | Sleeper's season projections — the only source with `fum_lost` |
@@ -81,17 +85,18 @@ Expect output like:
 
 ```
   ffc       231 2921 drafts, 2026-08-20..2026-08-25
-  espn      400 400 with ADP
   yahoo     217 217 with ADP
+  rotoballer 100 100 expert half-PPR ranks, updated from the live rankings page
   fcalc     192 192 ranked (half-PPR/1QB/12tm)
+  espn      400 400 with ADP
   injuries  258 258 carrying an injury tag
   espnproj  324 324 season projections
   sleeperproj  560 560 season projections
 ```
 
-**If any line says `FETCH FAILED`, say so in the report.** It falls back to cache
-rather than dying, which is correct on draft day — but a silently stale column
-dragging the consensus is exactly the sort of thing to surface, not bury.
+**If any line says `FETCH FAILED`, say so in the report.** It falls back to that
+source's last known good copy. The build refuses to publish if FFC, RotoBaller, or
+injuries are missing or more than 48 hours old.
 
 ### Don't add sources without reading why these were rejected
 
@@ -123,16 +128,16 @@ skill players a mean of 1.8 slots. Don't wire it back in without asking.
 python3 refresh/build.py
 ```
 
-Runs consensus projections → scoring → bonus simulation → blending, then writes
-`board-data.js` and `rankings.csv`. Takes about **seven seconds** (the bonus step
-is a 40,000-season Monte Carlo per player). It aborts rather than overwriting if
-fewer than 150 players survive, so a broken input can't silently wipe the board.
+Runs consensus projections → Sleeper scoring/bonus simulation/blending → Dad
+weekly-bucket simulation/blending, then writes `board-data.js` and `rankings.csv`.
+Both scoring simulations use 40,000 samples per player. It aborts rather than
+overwriting if either profile loses players or violates its K/DST floors.
 
 ### Read the injury audit — this is the important part
 
-The build cross-checks the live injury feed against the hand-set `avail` and
-prints anyone the feed calls IR/PUP/Out while the model still values him as fully
-healthy:
+The build cross-checks the live injury feed against the hand-set `avail`. It prints
+the conflict during blending and then **aborts before overwriting generated files**
+if anyone tagged IR/PUP/Out/Doubtful/Sus is still valued fully healthy:
 
 ```
 !! LIVE INJURY vs players.py avail -- these are valued as fully healthy:
@@ -140,18 +145,21 @@ healthy:
    #191 Zach Charbonnet        RB  PUP       Knee - ACL         avail=1.0
 ```
 
-**Act on every line.** Either lower `avail` in `players.py` and rebuild, or decide
-deliberately that the tag is stale and say so in the report. A player on PUP with
-a torn ACL carried at `avail=1.00` will show up on the board as a bargain.
+**Act on every line.** Lower `avail` in `players.py` and rebuild. If the feed is
+wrong, document that judgement and use a value just below 1.00 so the contradiction
+cannot silently reappear.
 
 ---
 
 ## 4. Verify
 
-- `board-data.js` has a fresh `BOARD_META.generated` date and ~249 players
+- `board-data.js` has a fresh `BOARD_META.generated` date and two ~249-player profiles
 - Open `draft-board-2026.html`, confirm it renders, rows cross off, the **+**
   button adds to My Team, and the position filters switch the tier bands
-- The table should have **13 columns**
+- Switch to **Dad's league** and confirm ranks, tier bands, roster flexes, and the
+  scoring breakdown in a player-detail drawer all update without losing My Team
+- The table should have **9 columns**; the individual sources and flags live in
+  the player-detail drawer
 - Spot-check two or three players whose news you just changed
 
 ## 5. Report
@@ -176,10 +184,16 @@ Only the delta. Don't restate the board.
   conversions still not modelled (no source projects them)
 - **Roster:** 12 teams — QB, 2RB, 2WR, TE, RB/WR/TE flex, WR/TE flex, K, DST,
   6 bench. That is 16 spots, so a full draft is **192 picks**.
-- **Blend:** 50% projection model, 50% public consensus. No market nudge — it was
-  removed on purpose.
-- **Source weights** (`SRCW` in blend.py): FFC 2.0, FantasyCalc 1.5, Yahoo 1.0,
-  ESPN 1.0. The two format-exact sources lead.
+- **Dad profile:** supplied bucket/distance scoring; **10 teams** — QB, 2RB, 2WR,
+  TE, two RB/WR/TE flexes, K, DST, 8 bench; 18 rounds / 180 picks. Its final blend
+  is 65% custom model, 35% outside timing context. Dad's Market is the median of
+  FFC, Yahoo, and FantasyCalc half-PPR ranks; its outside anchor is 70% that
+  robust market / 30% expert. DST floor 141, K floor 161.
+  TD length uses league-average distance distributions because no
+  projection source carries it.
+- **Blend:** 50% projection model, 50% outside-information anchor.
+- **Outside lanes:** market 55% / expert 30% / sentiment 15%. Market itself is
+  FFC 2 / Yahoo 1. ESPN is PPR context only and does not enter the blend.
 - **K and DST are discounted on purpose**, in three layers: `RELIABILITY` scales
   their VOR (K 0.15, DST 0.30), `FLOOR` keeps DST out before pick 145 and K before
   169, and only the top 12 of each are placed there on a stride of 2. Don't
@@ -188,3 +202,10 @@ Only the delta. Don't restate the board.
   the league first. Don't hardcode it.
 - **Removed on purpose:** the betting layer and the "scoring fit" column. Neither
   comes back without asking.
+
+## Automatic refresh
+
+`.github/workflows/refresh-board.yml` runs the same validated build every day and
+can also be started manually from GitHub Actions. It commits only
+`board-data.js` and `rankings.csv`, preserving the rule that automation never
+overwrites `draft-board-2026.html`.

@@ -67,7 +67,10 @@ def _blend(name, ours):
     out = {}
     for f in FIELDS:
         vals = [l[f] for l in lines if l.get(f) is not None and (f in l)]
-        vals = [v for v in vals if v or f in ("int", "fumLost")]
+        # Zero is a real projection, not missing data. Dropping it inflated
+        # peripheral roles (a feed projecting 0 rush TDs used to disappear
+        # beside another feed projecting 1). Missing fields are already
+        # excluded by the comprehension above.
         out[f] = sum(vals) / len(vals) if vals else 0.0
     NSRC[name] = len(lines)
     STATS[name] = out

@@ -13,7 +13,7 @@ for x in rows:
     x["final"]=x["blend"]
 
 rows.sort(key=lambda z:-z["final"])
-# Hard floor on draft position. Pinning their VALUE to public consensus was not
+# Hard floor on draft position. Pinning their VALUE to the outside anchor was not
 # enough -- the value curve is so flat this deep that a defense still surfaced
 # around pick 105. So place them by ORDER instead: skill players fill the board,
 # then K and DST are slotted in no earlier than FLOOR (see blend.py).
@@ -33,14 +33,23 @@ for pos in sorted(FLOOR, key=lambda p: FLOOR[p]):
     _tail.extend(grp[DRAFTED:])
 rows.extend(_tail)
 for i,x in enumerate(rows): x["rk"]=i+1
-for x in rows: x["gap"]=round(x["avg"]-x["rk"])
+for x in rows:
+    x["gap"]=round(x["avg"]-x["rk"]) if x["nsrc"] else None
 
 # ---------- sleeper / value tags ----------------------------------------
 for x in rows:
     sl=x["ffcr"]; tag=""
-    if sl and sl-x["rk"]>=25 and x["rk"]>=75: tag="SLEEPER"
-    elif x["gap"]>=18: tag="VALUE"
-    elif x["gap"]<=-18: tag="FADE"
+    if x.get("inj") in R.INJ_BAD:
+        tag=""  # an unavailable player is cheap for a reason, not a value call
+    elif sl and sl-x["rk"]>=25 and x["rk"]>=75: tag="SLEEPER"
+    elif x["pos"] in ("K","DST"):
+        # Their rank is set by the deliberate endgame floor, so `gap` for them is
+        # a restatement of that floor, not a disagreement with the room. Left in,
+        # 20 of the board's 39 FADE badges were floored defenses and kickers,
+        # which drowned the real fades.
+        tag=""
+    elif x["nsrc"]>=2 and x["gap"] is not None and x["gap"]>=18: tag="VALUE"
+    elif x["nsrc"]>=2 and x["gap"] is not None and x["gap"]<=-18: tag="FADE"
     x["tag2"]=tag
 
 def tier(seq,gap,cap,key="final"):
@@ -56,7 +65,7 @@ def _f(v,w=3): return f"{v:+{w}}" if v is not None else " "*(w-2)+"NA"
 print("TOP 22"); print("RK T POS  PLAYER                  AVG  MODEL GAP  TAG")
 for x in rows[:22]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']}  {x['p']:22} {x['avg']:5} "
-          f"{str(x['model']):>4} {x['gap']:+4}  {x['tag2']}")
+          f"{str(x['model']):>4} {_f(x['gap'],4)}  {x['tag2']}")
 print("\nSLEEPERS"); 
 for x in [y for y in rows if y["tag2"]=="SLEEPER"][:14]:
-    print(f"  #{x['rk']:3} {x['p']:22} {x['pos']}  FFC half-PPR ADP rank {x['ffcr']:>3}  gap {x['gap']:+3}")
+    print(f"  #{x['rk']:3} {x['p']:22} {x['pos']}  FFC half-PPR ADP rank {x['ffcr']:>3}  gap {_f(x['gap'])}")

@@ -14,11 +14,11 @@ def _mkrow(name, tm, pos, key, nn, g="", r=""):
     b=BASE.get(key); q=BONUS.get(key,0.0)
     rc=RECS.get(key,0)
     ydb = q - (0.25*rc if pos=="TE" else 0.0)     # strip the double-counted TE premium
-    return dict(p=name,tm=tm,pos=pos,bye=BYE.get(tm,0),
+    return dict(p=name,key=key,tm=tm,pos=pos,bye=BYE.get(tm,0),
         base=b,bonus=round(ydb,1),quirk=round(q,1),
         tot=(b+ydb) if b is not None else None,av=AV.get(key,1.0),g=g,r=r,
         ffc=R.FFC_N.get(nn), espn=R.ESPN_N.get(nn),
-        yahoo=R.YAHOO_N.get(nn), fcalc=R.FC_N.get(nn),
+        yahoo=R.YAHOO_N.get(nn), fcalc=R.FC_N.get(nn), expert=R.EXPERT_N.get(nn),
         inj=(R.INJ_N.get(nn) or {}).get("status"),
         injbody=(R.INJ_N.get(nn) or {}).get("body"),
         adp=R.ADP_N.get(nn), adpsd=R.SD_N.get(nn),
@@ -35,12 +35,18 @@ for n,tm,a,sk,fr,it,dtd,pa,saf,ktd in P.DST:
     # our own DST key is built directly rather than sniffed by norm()
     rows.append(_mkrow(f"{tm} {n}",tm,"DST",f"{tm} {n}",f"dst {tm}"))
 
-# All four sources are real ADP in picks -> dense integer rank within this pool,
-# so the columns are directly comparable to each other and to our own rank.
-for key in ("ffc","espn","yahoo","fcalc"):
+# Put market/value feeds on the same dense rank scale. RotoBaller's editorial
+# overall rank stays exact as published. The lanes remain separate below:
+# FFC/Yahoo are half-PPR draft market, RotoBaller is expert opinion,
+# FantasyCalc is sentiment/value, and ESPN is PPR platform context only.
+for key in ("ffc","yahoo","fcalc","espn"):
     have=sorted([x for x in rows if x[key] is not None], key=lambda z:z[key])
     for i,x in enumerate(have): x[key+"r"]=i+1
     for x in rows: x.setdefault(key+"r",None)
+for x in rows:
+    # An editorial overall rank must be shown exactly as published. Densifying
+    # it against our smaller player pool silently changed RotoBaller #96 to #95.
+    x["expertr"] = x["expert"]
 
 # VOR: 12 teams, QB/2RB/2WR/TE + W-R-T + W-T + K + DST
 have=[x for x in rows if x["tot"] is not None]
@@ -88,39 +94,43 @@ TIERS_LATER=True
 # the ranking -- and the league's quirks are already priced into `tot` via the
 # yardage bonuses and the TE premium. Removed rather than kept as decoration.
 
-# The four sources do not deserve equal say.
-#   ffc     REAL half-PPR 12-team ADP from thousands of actual drafts. The only
-#           source whose format matches this league, so it carries double weight.
-#   yahoo   real ADP, and Yahoo's default scoring is 0.5/reception -> half PPR.
-#   espn    real ADP from ESPN drafts (ownership.averageDraftPosition). Not their
-#           editorial board, whose STANDARD and PPR variants are byte-identical
-#           and therefore carry no format information at all.
-#   fcalc   FantasyCalc at half PPR / 1QB / 12 teams -- exactly this league. A
-#           market VALUE rather than an ADP, so it answers the same question from
-#           a different direction. Format-exact, so it sits just under FFC.
-# MyFantasyLeague was trialled as a fourth and dropped: its pool is riddled with
-# superflex drafts, which pulled QBs 38 slots early. See fetch_mfl in sources.py.
-# Sleeper is deliberately absent: search_rank is search popularity, not draft
-# position, and Sleeper publishes no ADP anywhere (their GraphQL has no adp field
-# either). It is still fetched for the trending signal.
-SRCW={"ffcr":2.0,"fcalcr":1.5,"yahoor":1.0,"espnr":1.0}
+# ---- outside-information lanes ---------------------------------------------
+# Keep unlike signals unlike. ADP says when the room will take a player; expert
+# rank says where an independent evaluator would take him; FantasyCalc says how
+# the broader half-PPR market values him. ESPN is PPR ADP and remains visible for
+# context, but it does not enter this half-PPR decision anchor.
+MARKET_W={"ffcr":2.0,"yahoor":1.0}
+LANE_W={"market":0.55,"expert_lane":0.30,"sentiment":0.15}
+
+def weighted(row, weights):
+    pairs=[(row[k],w) for k,w in weights.items() if row.get(k) is not None]
+    if not pairs:
+        return None,0
+    tw=sum(w for _,w in pairs)
+    return round(sum(v*w for v,w in pairs)/tw,1),len(pairs)
+
 for x in rows:
-    pairs=[(x[k],w) for k,w in SRCW.items() if x[k] is not None]
-    x["nsrc"]=len(pairs)
-    if pairs:
-        tw=sum(w for _,w in pairs)
-        x["avg"]=round(sum(v*w for v,w in pairs)/tw,1)
+    x["market"],x["market_n"]=weighted(x,MARKET_W)
+    x["expert_lane"]=x["expert"]
+    x["sentiment"]=x["fcalcr"]
+    lane_pairs=[(x[k],w) for k,w in LANE_W.items() if x.get(k) is not None]
+    x["nsrc"]=x["market_n"]+(1 if x["expert_lane"] is not None else 0)+(1 if x["sentiment"] is not None else 0)
+    if lane_pairs:
+        tw=sum(w for _,w in lane_pairs)
+        x["anchor"]=round(sum(v*w for v,w in lane_pairs)/tw,1)
     else:
-        x["avg"]=float(len(rows))     # nobody ranked him at all -- sort him last
-    vs=[v for v,_ in pairs]
-    x["spread"]=max(vs)-min(vs) if len(vs)>1 else 0
-# Translate each player's average public rank into points-above-replacement by
-# reading off the model's own value curve at that slot -> a "market value".
+        x["anchor"]=float(len(rows))
+    x["avg"]=x["anchor"]  # compatibility: AvgPublic now means decision anchor
+    vs=[v for v in (x["market"],x["expert_lane"],x["sentiment"]) if v is not None]
+    x["spread"]=round(max(vs)-min(vs)) if len(vs)>1 else 0
+
+# Translate the outside-information anchor into points-above-replacement by
+# reading off the model's own value curve at that slot.
 curve=sorted([x["vor"] for x in rows if x["vor"] is not None], reverse=True)
 def market(rank):
     i=int(round(rank))-1
     return curve[max(0,min(len(curve)-1,i))]
-W=0.50                       # half model, half market
+W=0.50                       # half league model, half outside-information anchor
 # Earliest slot a K or DST is allowed to appear, on top of the reliability shrink
 # above. The roster is 16 deep (QB/2RB/2WR/TE/2flex/K/DST/6bench) across 12 teams,
 # so a full draft is 192 picks. Real 12-team drafts take a defense late in round 13
@@ -129,18 +139,22 @@ W=0.50                       # half model, half market
 # is mostly noise. Floors are set to the start of round 13 and round 15.
 FLOOR={"DST":145, "K":169}
 for x in rows:
-    mv=market(x["avg"])
+    mv=market(x["anchor"])
     x["mktvor"]=round(mv,1)
     if x["pos"] in FLOOR:
-        # pinned to the later of public consensus and the floor -- no model pull
-        x["blend"]=round(market(max(x["avg"], FLOOR[x["pos"]])),1)
+        # pinned to the later of the outside anchor and the floor -- no model pull
+        x["blend"]=round(market(max(x["anchor"], FLOOR[x["pos"]])),1)
     elif x["vor"] is not None:
         x["blend"]=round(W*x["vor"]+(1-W)*mv,1)
     else:
         x["blend"]=round(mv,1)
 rows.sort(key=lambda z:-z["blend"])
 for i,x in enumerate(rows): x["rk"]=i+1
-for x in rows: x["gap"]=round(x["avg"]-x["rk"])
+for x in rows:
+    # No outside signal means there is no defensible "edge" to advertise. The
+    # fallback anchor still lets the model place deep players, but it must not
+    # turn missing data into a giant VALUE badge.
+    x["gap"]=round(x["avg"]-x["rk"]) if x["nsrc"] else None
 
 
 def tier(seq,gap,cap):
@@ -167,7 +181,7 @@ print("\nRK T  POS   PLAYER                FFC  FC ESPN   YH  AVG  GAP")
 for x in rows[:26]:
     print(f"{x['rk']:3} {x['otier']} {x['pos']}{x['ptier']:<3} {x['p']:22} "
           f"{str(x['ffcr']):>3} {str(x['fcalcr']):>3} {str(x['espnr']):>4} "
-          f"{str(x['yahoor']):>4} {x['avg']:5} {x['gap']:+4}")
+          f"{str(x['yahoor']):>4} {x['avg']:5} {str(x['gap']):>4}")
 print("\nBIGGEST FOUR-SYSTEM DISAGREEMENTS")
 for x in sorted(rows,key=lambda z:-z["spread"])[:12]:
     print(f"  {x['p']:22} FFC {str(x['ffcr']):>3} ESPN {str(x['espnr']):>3} "

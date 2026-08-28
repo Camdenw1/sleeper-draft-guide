@@ -1,8 +1,8 @@
 # Sleeper draft guide — 2026
 
-A draft board for a 12-team half-PPR league with a TE premium and 100/200-yard
-bonuses. Rankings blend a projection model rescored for this exact scoring with
-four public half-PPR sources and live injury data.
+A two-profile draft board: the primary 12-team half-PPR Sleeper league, plus an
+alternate view for Dad's unusual weekly-bucket scoring. Both combine public draft
+timing, an expert board, custom projection models, and live injuries.
 
 ```
 draft-board-2026.html   presentation — hand-edited, never overwritten
@@ -20,9 +20,22 @@ hit the **+** next to a name to put him on your own team. State persists in
 localStorage, so closing the tab mid-draft is safe; "Reset board" clears it.
 Filter by position to switch the tier bands from overall to positional.
 
+Use **Rank for → Sleeper league / Dad's league** at the top to switch scoring and
+roster logic. Drafted players and My Team are shared between views, so switching
+never loses draft state.
+
+### Dad's league profile
+
+The alternate profile models the supplied weekly passing/rushing/receiving yard
+buckets, position-specific reception tiers, distance-based TDs, kicker and DST
+rules, two unrestricted flexes, and eight bench spots. Weekly buckets use 40,000
+simulated games per player. No projection feed supplies touchdown length, so those
+points use a documented league-average distance distribution. The profile is
+calibrated for the confirmed **10-team**, 18-round league.
+
 Three panels sit above the board:
 
-- **Best available** — top of the board plus the best man left at every position
+- **Best available** — top of the board plus the best player left at each skill position
 - **Value coming up** — where your rank most disagrees with the room, limited to
   players actually in range of your next pick and capped at two per position. A
   +37 edge on someone going 90 picks from now isn't a decision you get to make,
@@ -45,26 +58,37 @@ The draft id is the long number in your Sleeper draft URL.
 
 ## Rebuild
 
+Install the data dependencies once:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Then rebuild from the project root:
+
 ```bash
 python3 refresh/build.py
 ```
 
-Takes about ten seconds. Fetches the three public ADP sources live, then aborts
-rather than overwriting if the pipeline produces fewer than 150 players. Fetched
-ranks are cached for six hours in `refresh/pubranks_cache.json` (gitignored), and
-any source that fails to fetch falls back to that cache — so a draft-day rebuild
-still works if someone's API is down or the wifi isn't cooperating.
+Takes about fifteen seconds and generates both ranking profiles. Every source is cached independently for six hours in
+`refresh/pubranks_cache.json` (gitignored). A failure uses that source's last known
+good copy without making it look newly fetched. The build aborts before overwriting
+if core coverage, injuries, source freshness, player identity, or K/DST floors fail.
 
 ## Columns
 
 | | |
 |---|---|
-| **#** | blended rank — half model, half public consensus, nudged by market |
+| **#** | blended rank — 50% custom model in the Sleeper view, 65% in Dad's view |
 | **Lasts** | chance he's still there at your next pick, from FFC's real ADP mean and dispersion |
-| **FFC / FCalc / ESPN / Yahoo** | each source's rank, densely re-ranked to one slot per player. Weighted 2 / 1.5 / 1 / 1, not averaged flat — see below |
-| **Where they land** | the three sources plotted against their own average |
+| **Market** | FFC/Yahoo half-PPR ADP lane, weighted 2 / 1 |
+| **Expert** | RotoBaller's free, expert-authored half-PPR overall Top 100 |
 | **Model** | where the projection alone ranks him, ignoring every public board — the half of this that isn't aggregated ADP |
-| **Gap** | public average minus blended rank; positive means he should fall to you |
+| **Edge** | outside anchor minus blended rank; positive means a potential discount |
+
+In Dad's view, **Market** instead uses the median of FFC, Yahoo, and FantasyCalc
+half-PPR signals. This prevents a single platform outlier from defining the
+headline market number; the Sleeper view keeps its format-exact FFC-led weighting.
 
 Badges: **SLEEPER** = 25+ slots later on FFC's half-PPR ADP than he ranks here,
 outside the top 75. **VALUE** = 18+ slots of edge. **FADE** = 18+ the other way.
@@ -84,11 +108,16 @@ and no kicker before **pick 169** — rounds 13 and 15 of a 16-round, 192-pick d
 Only the top 12 of each are placed there, interleaved with bench fliers, since only
 one per team is ever drafted.
 
+Dad's 10-team, 18-round profile keeps the same round strategy: DST cannot appear
+before pick 141 (round 15) and K before 161 (round 17). Only the top 10 of each
+are inserted into the draftable range.
+
 Full methodology is behind the "How this works" button on the board itself.
 
 ## Refresh schedule
 
-Aug 28 and Sept 8. Draft is Sept 9.
+GitHub Actions refreshes and validates the generated data daily. Run one manual
+refresh on Sept 8 as the final human injury/flag review. Draft is Sept 9.
 
 ## Data sources
 
@@ -98,18 +127,15 @@ All rankings come from free, public, no-auth endpoints, fetched at build time by
 | Source | What it gives | Endpoint |
 |---|---|---|
 | [Fantasy Football Calculator](https://fantasyfootballcalculator.com) | Real **half-PPR, 12-team ADP** from thousands of public mock drafts — the only source whose format matches this league exactly, so it anchors the blend | `/api/v1/adp/half-ppr` |
-| ESPN | Real ADP (`ownership.averageDraftPosition`), not their editorial board | `lm-api-reads.fantasy.espn.com` |
-| **FantasyCalc** | Market value at `ppr=0.5&numQbs=1&numTeams=12` — exactly this league. Also supplies the 30-day market trend behind the ↑/↓ arrows | `api.fantasycalc.com/values/current` |
+| [RotoBaller](https://www.rotoballer.com/nfl-fantasy-football-rankings-tiered-ppr/265860/rankings?spreadsheet=half-ppr&league=Overall) | Free, expert-authored **half-PPR overall Top 100** — the editorial expert lane | structured JSON-LD on the public rankings page |
+| **FantasyCalc** | Market value at `ppr=0.5&numQbs=1&numTeams=12` — sentiment and 30-day trend, not ADP | `api.fantasycalc.com/values/current` |
+| ESPN | PPR ADP context (`ownership.averageDraftPosition`); displayed in details but excluded from the half-PPR blend | `lm-api-reads.fantasy.espn.com` |
 | **Sleeper (injuries)** | **Live injury status** — IR / PUP / Out / Doubtful / Questionable plus body part, updated constantly | `api.sleeper.app/v1/players/nfl` |
-| Sleeper (ranks) | **Not a ranking column.** `search_rank` is search popularity, not ADP, and Sleeper publishes no ADP anywhere — used only for the trending/HOT signal | `api.sleeper.app/v1/players/nfl` |
 | Yahoo | Public draft-analysis average pick | `pub-api-ro.fantasysports.yahoo.com` |
 
-**No column is an editor's list** — every one is what people actually did. They are
-weighted **2 / 1.5 / 1 / 1 (FFC / FantasyCalc / Yahoo / ESPN)**, not averaged flat,
-with the two format-exact sources leading. FFC is real half-PPR 12-team ADP.
-FantasyCalc is half-PPR / 1QB / 12-team market value — same format, priced off real
-league activity instead of mock drafts. Yahoo is average pick at their default
-0.5/reception; ESPN is average draft position across ESPN drafts.
+The outside anchor deliberately keeps unlike signals separate: **55% half-PPR
+market ADP, 30% expert rank, 15% FantasyCalc sentiment**. ESPN is PPR context only.
+The final rank blends that anchor 50/50 with the league-specific model.
 
 ### Projections
 
@@ -136,9 +162,8 @@ IR / PUP / Out / Doubtful / Sus are struck through and **excluded from the value
 panel** — cheap for a reason is not the same as cheap.
 
 The build also cross-checks that feed against the hand-set `avail` in
-`players.py` and prints anyone the feed calls IR/PUP/Out while the model still
-values him as fully healthy. That check immediately found Zach Charbonnet on PUP
-with a torn ACL, carried at `avail=1.00`.
+`players.py` and refuses to overwrite the board when a serious live status is
+still valued as fully healthy.
 
 Two sources were tried and rejected rather than padding the count. **Sleeper**
 publishes no ADP at all — `search_rank` is search popularity, and their GraphQL has

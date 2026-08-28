@@ -1,8 +1,8 @@
 """Public half-PPR ranking columns, normalized for joining onto the player pool.
 
 Previously this module held a hand-pasted FantasyPros ECR board and a Flock
-Fantasy export. Both were paid products, so they were replaced with four free
-public sources (see sources.py). The name-normalizer below is unchanged --
+Fantasy export. Both were paid products, so they were replaced with free public
+market, expert, and context sources (see sources.py). The name-normalizer below is unchanged --
 blend.py joins on it and the aliases were tuned against the real pool.
 """
 import sources
@@ -75,16 +75,18 @@ def norm(n):
 
 
 DATA, NOTES, EXTRAS = sources.load()
+SOURCE_META = sources.LAST_META
 FFCX  = EXTRAS.get("ffc", {})
 FCX   = EXTRAS.get("fcalc", {})
 INJX  = EXTRAS.get("injuries", {})
 
-# Every ranking source is format-aware. Lower is better in all of them, so they are
-# directly comparable once densely re-ranked within the pool (blend.py).
+# Lower is better in every source. blend.py densely re-ranks them, then keeps ADP,
+# expert opinion, sentiment, and PPR context in separate lanes.
 FFC_N   = {norm(k): v for k, v in DATA.get("ffc", {}).items()}
 ESPN_N  = {norm(k): v for k, v in DATA.get("espn", {}).items()}
 YAHOO_N = {norm(k): v for k, v in DATA.get("yahoo", {}).items()}
 FC_N    = {norm(k): v for k, v in DATA.get("fcalc", {}).items()}
+EXPERT_N = {norm(k): v for k, v in DATA.get("rotoballer", {}).items()}
 
 # FFC also hands us bye weeks and real ADP dispersion for free. The dispersion is
 # the useful part: it is measured disagreement among actual drafters, per player,
@@ -107,7 +109,8 @@ INJ_N = {norm(k): v for k, v in INJX.items()}
 # Statuses that mean "do not draft him as a starter"
 INJ_BAD = {"IR", "PUP", "Out", "Sus", "NA", "DNR", "Doubtful"}
 
-COLUMNS = [("ffc", FFC_N), ("espn", ESPN_N), ("yahoo", YAHOO_N), ("fcalc", FC_N)]
+COLUMNS = [("ffc", FFC_N), ("yahoo", YAHOO_N), ("expert", EXPERT_N),
+           ("fcalc", FC_N), ("espn", ESPN_N)]
 
 if __name__ == "__main__":
     for k, v in NOTES.items():
