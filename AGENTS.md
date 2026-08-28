@@ -74,8 +74,19 @@ QB, 2RB, 2WR, TE, two RB/WR/TE flexes, K, DST, 8 bench.
 
 Camden confirmed Dad's league has **10 teams**.
 Weekly buckets are simulated over 40k games/player. No feed projects TD length,
-so `dad_score.py` uses documented league-average passing/receiving and rushing TD
-distance distributions. Defensive recoveries proxy for forced fumbles. The Dad
+so `dad_score.py` starts from documented league-average passing/receiving and
+rushing TD distance distributions and then **tilts each player's curve by how far
+downfield he works** (yards per catch for receiving scores, yards per carry for
+rushing ones, in log-distance space). This league pays more for longer scores, so
+a flat league-average TD value quietly paid a 16 yd/catch deep threat exactly
+what it paid a 10 yd/catch checkdown target. Receiving TDs now range ~3.6 to ~4.4
+points instead of a fixed 3.89.
+
+QB **passing** TDs stay at the league average -- their distance is set by the
+receivers, not by anything the feeds carry about the quarterback. QB **rushing**
+TDs take a fixed SHORT tilt: a quarterback's rushing scores are sneaks and
+goal-line keepers regardless of how many scramble yards he accumulates, so
+deriving their length from rushing volume is backwards. Defensive recoveries proxy for forced fumbles. The Dad
 blend is 65% custom model / 35% outside timing context, with DST floored at pick
 141 and K at 161 in the 18-round, 180-pick draft. Change these only if Camden
 asks for a different risk tradeoff.

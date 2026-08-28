@@ -57,8 +57,46 @@ PASS_DIST = np.array([.28, .18, .20, .12, .08, .05, .04, .025, .015, .007, .003]
 RUSH_DIST = np.array([.58, .16, .12, .055, .03, .02, .014, .009, .005, .004, .003])
 PASS_TD_VALUE = np.array([3, 3, 4, 4, 5, 5, 6, 6, 7, 8, 9], dtype=float)
 RUSH_TD_VALUE = np.array([4, 4, 5, 5, 6, 6, 7, 7, 8, 9, 10], dtype=float)
+TD_MID = np.array([3, 8, 15, 25, 35, 45, 55, 65, 75, 85, 95], dtype=float)
 PASS_TD_EV = float(PASS_DIST @ PASS_TD_VALUE)
 RUSH_TD_EV = float(RUSH_DIST @ RUSH_TD_VALUE)
+
+
+def tilted(base, z, beta=0.35):
+    """Shift a TD-distance distribution by how far downfield a player works.
+
+    This league pays MORE for longer scores, so a league-average distance mix
+    applied to everyone quietly pays a 16 yd/catch deep threat exactly what it
+    pays a 10 yd/catch checkdown target. Yards per touch is the only depth proxy
+    the feeds carry, so it is what tilts the curve -- in log-distance space, so
+    the tail moves rather than the whole mass sliding.
+    """
+    l = np.log(TD_MID)
+    m = float(base @ l)
+    sd = float(np.sqrt(base @ (l - m) ** 2))
+    w = base * np.exp(beta * np.clip(z, -1.5, 1.5) * (l - m) / sd)
+    return w / w.sum()
+
+
+# Centres/spreads per role: backs catch the ball far shorter than receivers do,
+# so "deep for a running back" is not the same number as "deep for a WR".
+REC_Z = {"WR": (12.6, 2.6), "TE": (11.0, 2.2), "RB": (8.0, 2.5)}
+
+
+def rec_td_ev(ypr, pos):
+    if ypr <= 0:
+        return PASS_TD_EV
+    c, s = REC_Z.get(pos, (11.5, 2.6))
+    return float(tilted(PASS_DIST, (ypr - c) / s) @ PASS_TD_VALUE)
+
+
+QB_RUSH_TD_EV = float(tilted(RUSH_DIST, -0.3) @ RUSH_TD_VALUE)
+
+
+def rush_td_ev(ypc):
+    if ypc <= 0:
+        return RUSH_TD_EV
+    return float(tilted(RUSH_DIST, (ypc - 4.3) / 0.7) @ RUSH_TD_VALUE)
 
 
 def skill_game(att, rush_yards, receptions, rec_yards, pos):
@@ -92,20 +130,30 @@ for n, tm, adp, py, ptd, ry, rtd, avail in P.QB:
     ryg = (RNG.gamma(2.2, (ry / 17.0) / 2.2, N) * np.sqrt(g)
            if ry > 0 else np.zeros(N))
     yards = float((bucket(pyg, 75, 7) + bucket(ryg, 25, 9)).mean()) * 17
-    save(n, yards=yards, touchdowns=ptd * PASS_TD_EV + rtd * RUSH_TD_EV,
+    # A QB's passing-TD distance is set by his receivers, not by anything the
+    # feeds carry about him, so those stay at the league-average value.
+    # QB rushing scores get a fixed SHORT tilt rather than one derived from
+    # rushing yards: a quarterback's rushing touchdowns are overwhelmingly
+    # sneaks and goal-line keepers no matter how many scramble yards he piles
+    # up, so rewarding volume rushers with longer scores would be backwards.
+    save(n, yards=yards, touchdowns=ptd * PASS_TD_EV + rtd * QB_RUSH_TD_EV,
          avail=avail)
 
 for n, tm, adp, att, ry, rtd, rec, rey, retd, avail in P.RB:
     yards, catches = skill_game(att, ry, rec, rey, "RB")
-    save(n, yards, catches, rtd * RUSH_TD_EV + retd * PASS_TD_EV, avail=avail)
+    save(n, yards, catches,
+         rtd * rush_td_ev(ry / max(att, 1)) + retd * rec_td_ev(rey / max(rec, 1), "RB"),
+         avail=avail)
 
 for n, tm, adp, rec, rey, retd, att, ry, rtd, avail in P.WR:
     yards, catches = skill_game(att, ry, rec, rey, "WR")
-    save(n, yards, catches, rtd * RUSH_TD_EV + retd * PASS_TD_EV, avail=avail)
+    save(n, yards, catches,
+         rtd * rush_td_ev(ry / max(att, 1)) + retd * rec_td_ev(rey / max(rec, 1), "WR"),
+         avail=avail)
 
 for n, tm, adp, rec, rey, retd, avail in P.TE:
     yards, catches = skill_game(0, 0, rec, rey, "TE")
-    save(n, yards, catches, retd * PASS_TD_EV, avail=avail)
+    save(n, yards, catches, retd * rec_td_ev(rey / max(rec, 1), "TE"), avail=avail)
 
 
 # Kicker rule: 1 through 40 yards, 2 at 41-50, 3 at 51-60, 4 at 61+; XP=.5.
