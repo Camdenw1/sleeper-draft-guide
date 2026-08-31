@@ -205,7 +205,8 @@ Only the delta. Don't restate the board.
 
 ## Automatic refresh
 
-`.github/workflows/refresh-board.yml` runs the same validated build every day and
-can also be started manually from GitHub Actions. It commits only
+`.github/workflows/refresh-board.yml` runs the same validated build every day
+through **7 September 2026 at 12:40:09 PM PDT**. At and after that exact cutoff,
+scheduled and manual runs are clean no-ops. Before cutoff, it commits only
 `board-data.js` and `rankings.csv`, preserving the rule that automation never
 overwrites `draft-board-2026.html`.

@@ -53,7 +53,7 @@ RB = [
  ("Ashton Jeanty","LV",9,271,1137,7,56,406,2,1.00),
  ("Jeremiyah Love","ARI",25,246,1082,7,56,417,2,0.90),
  ("Kyren Williams","LAR",19,249,1171,10,34,245,2,1.00),
- ("Josh Jacobs","GB",32,282,1155,10,35,277,1,1.00),
+ ("Josh Jacobs","GB",32,282,1155,10,35,277,1,0.75), # Commissioner exempt + groin; return timing uncertain
  ("Breece Hall","NYJ",31,258,1162,5,47,403,2,1.00),
  ("Javonte Williams","DAL",29,245,1126,10,33,217,1,1.00),
  ("Cam Skattebo","NYG",43,262,1048,8,44,346,1,1.00),
@@ -107,7 +107,7 @@ RB = [
  ("Najee Harris","NYG",250,58,233,2,5,41,0,1.00),
  ("Jaydon Blue","DAL",201,61,224,1,11,71,0,1.00),
  ("Emmett Johnson","KC",171,48,186,1,11,77,0,1.00),
- ("James Conner","ARI",158,36,142,1,8,68,0,1.00),
+ ("James Conner","ARI",158,36,142,1,8,68,0,0.70), # IR-designated return; age/recovery adds risk
  ("Trey Benson","ARI",196,23,100,0,0,0,0,0.00), # IR: not a 2026 draft asset
 ]
 
@@ -192,7 +192,7 @@ WR = [
  ("Darius Slayton","NYG",250,31,426,3,0,0,0,1.00),
  ("Travis Hunter","JAC",188,34,391,2,0,0,0,1.00),
  ("Omar Cooper Jr.","NYJ",159,28,355,3,0,0,0,1.00),
- ("Tank Dell","HOU",189,29,337,2,0,0,0,1.00),
+ ("Tank Dell","HOU",189,29,337,2,0,0,0,0.70), # IR-designated return after major knee reconstruction
  ("Kayshon Boutte","NE",182,21,305,3,0,0,0,1.00),
  ("Tre Harris","LAC",184,32,415,2,0,0,0,1.00),
  ("Keon Coleman","BUF",250,21,307,2,0,0,0,1.00),

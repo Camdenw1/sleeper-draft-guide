@@ -8,20 +8,39 @@ on:
 permissions:
   contents: write
 
+env:
+  # Automatic updates end exactly one week after Camden's request.
+  REFRESH_UNTIL: "2026-09-07T19:40:09Z"
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check refresh window
+        id: window
+        shell: bash
+        run: |
+          if [ "$(date -u +%s)" -lt "$(date -u -d "$REFRESH_UNTIL" +%s)" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Automatic draft-board refresh ended at $REFRESH_UNTIL."
+          fi
+      - if: steps.window.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+      - if: steps.window.outputs.enabled == 'true'
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
       - name: Install data dependencies
+        if: steps.window.outputs.enabled == 'true'
         run: python -m pip install -r requirements.txt
       - name: Rebuild and validate generated data
+        if: steps.window.outputs.enabled == 'true'
         run: python refresh/build.py
       - name: Commit a changed board
+        if: steps.window.outputs.enabled == 'true'
         run: |
           if git diff --quiet -- board-data.js rankings.csv; then
             echo "No ranking changes."

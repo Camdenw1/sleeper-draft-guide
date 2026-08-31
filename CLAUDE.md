@@ -195,3 +195,10 @@ scored against a finished season. Run the board against 2025 actuals and check
 whether the blend actually beat drafting straight off FFC ADP — that is the only
 way to know if the model half is earning its place. Offseason work, not
 two-weeks-before-the-draft work.
+
+## Refresh cutoff
+
+The GitHub Actions workflow has a hard cutoff at **2026-09-07 19:40:09 UTC**
+(12:40:09 PM PDT). At or after that instant, scheduled and manual runs are clean
+no-ops and cannot rewrite generated data. Camden requested this one-week cutoff
+on 31 August 2026.
