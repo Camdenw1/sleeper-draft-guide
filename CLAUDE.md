@@ -185,6 +185,15 @@ Two sources were tested and rejected. Don't re-add either without new evidence:
 - `avail` is still hand-set in players.py — it is injury *judgement*, not a stat
   projection. build.py audits it against the live injury feed on every run.
 - Deep bench players are smoothed across 17 games rather than modelled as spiky.
+- **Injured players are discounted twice.** `players.py` lines are full-season and
+  get multiplied by `avail`; the ESPN and Sleeper feeds already bake expected
+  missed time into their own numbers. Averaging them and then applying `avail`
+  double-counts the absence. Measured 3 Sep 2026 it affected 5 players, four of
+  them past pick 184 — but Josh Jacobs (ESPN 719 rush yds vs our 1155 baseline,
+  then x0.75) sits at #76 against a market rank of 49, and that gap is mostly
+  this bug. Fixing it properly means applying `avail` to the players.py line
+  *before* the blend rather than to the consensus after, which touches score.py,
+  fit.py and dad_score.py. Not attempted mid-season.
 
 ## Built since — don't rebuild these
 
