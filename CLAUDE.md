@@ -141,9 +141,18 @@ for `injury_status`, body part and roster status. Badges render on the board;
 IR/PUP/Out/Doubtful/Sus players are struck through and excluded from the value
 panel.
 
-**build.py aborts before overwriting generated files** whenever the feed says a
-player is IR/PUP/Out/Doubtful/Sus but `players.py` still values him at
-`avail=1.00`. Fix `avail` deliberately; do not weaken the check.
+**A feed-confirmed inactive status now CAPS `avail` automatically** (`capped_avail`
+in proj.py): IR/PUP/NA/DNR/Sus cap at 0.35, Out at 0.60, Doubtful at 0.75. The cap
+only applies to values at or above 0.95 — anything lower has clearly been set by a
+human and is never overridden — and every cap is printed so the real number can be
+set deliberately later.
+
+This replaced a hard abort. The abort was right for a person at a keyboard and
+wrong for a daily job: on 2 Sep 2026 Isiah Pacheco went on IR, `players.py` still
+had him at 1.00, and the build refused to publish for two days running while
+nobody was watching. Publishing slightly-conservative numbers beats publishing
+nothing. build.py still aborts on the structural checks (rank sequence, duplicate
+identities, K/DST floors, missing or >48h-old required sources).
 
 Two sources were tested and rejected. Don't re-add either without new evidence:
 

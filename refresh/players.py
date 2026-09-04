@@ -87,7 +87,7 @@ RB = [
  ("Dylan Sampson","CLE",155,61,245,1,40,316,2,1.00),
  ("Chris Rodriguez Jr.","JAC",139,129,556,4,10,76,0,1.00),
  ("Tyrone Tracy Jr.","NYG",126,90,380,2,28,215,1,1.00),
- ("Isiah Pacheco","DET",157,122,489,3,20,139,0,1.00),
+ ("Isiah Pacheco","DET",157,122,489,3,20,139,0,0.70),   # IR (back) 3 Sep 2026
  ("Ty Johnson","BUF",250,52,212,1,29,270,2,1.00),
  ("Brian Robinson Jr.","ATL",135,107,462,4,9,58,0,1.00),
  ("Tyler Allgeier","ARI",112,98,391,3,18,124,0,1.00),

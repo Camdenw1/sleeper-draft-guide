@@ -31,6 +31,38 @@ _D, _N, _X = sources.load(quiet=True)
 ESPN = {R.norm(k): v for k, v in _X.get("espnproj", {}).items()}
 SLP  = {R.norm(k): v for k, v in _X.get("sleeperproj", {}).items()}
 
+# ---- availability safety net ------------------------------------------------
+# `avail` is hand-set judgement and stays that way -- but "this player is on IR"
+# is a FACT the feed reports, not a judgement, and a stale 1.00 against it used to
+# hard-abort the build. That is right for a human at a keyboard and wrong for a
+# daily job: the refresh stalled for two days in September 2026 because Isiah
+# Pacheco went on IR and nobody was there to unblock it.
+#
+# So a feed-confirmed inactive status now CAPS avail automatically. The cap only
+# ever lowers a value, so every deliberate number Camden has set -- Benson at
+# 0.00, Conner at 0.70 -- survives untouched. Only a stale 1.00 gets clamped, and
+# it is reported loudly so the real number can be set deliberately later.
+AVAIL_CAP = {"IR": 0.35, "PUP": 0.35, "NA": 0.35, "DNR": 0.35, "Sus": 0.35,
+             "Out": 0.60, "Doubtful": 0.75}
+_CAPPED = []
+
+
+# Anything below this has clearly been looked at by a human, so leave it alone.
+# Only an essentially untouched 1.00 counts as stale.
+UNTOUCHED = 0.95
+
+
+def capped_avail(name, av):
+    if av < UNTOUCHED:          # a considered number -- never override it
+        return av
+    st = (R.INJ_N.get(R.norm(name)) or {}).get("status")
+    cap = AVAIL_CAP.get(st)
+    if cap is not None and av > cap:
+        _CAPPED.append((name, st, av, cap))
+        return cap
+    return av
+
+
 FIELDS = ("passYd", "passTD", "int", "ruAtt", "ruYd", "ruTD",
           "rec", "reYd", "reTD", "fumLost")
 STATS = {}          # name -> consensus line
@@ -82,23 +114,23 @@ QB, RB, WR, TE = [], [], [], []
 
 for n, tm, a, py, ptd, ry, rtd, av in P.QB:
     b = _blend(n, {"passYd": py, "passTD": ptd, "ruYd": ry, "ruTD": rtd})
-    QB.append((n, tm, a, b["passYd"], b["passTD"], b["ruYd"], b["ruTD"], av))
+    QB.append((n, tm, a, b["passYd"], b["passTD"], b["ruYd"], b["ruTD"], capped_avail(n, av)))
 
 for n, tm, a, ra, ry, rtd, rc, red, retd, av in P.RB:
     b = _blend(n, {"ruAtt": ra, "ruYd": ry, "ruTD": rtd,
                    "rec": rc, "reYd": red, "reTD": retd})
     RB.append((n, tm, a, b["ruAtt"] or ra, b["ruYd"], b["ruTD"],
-               b["rec"], b["reYd"], b["reTD"], av))
+               b["rec"], b["reYd"], b["reTD"], capped_avail(n, av)))
 
 for n, tm, a, rc, red, retd, ra, ry, rtd, av in P.WR:
     b = _blend(n, {"rec": rc, "reYd": red, "reTD": retd,
                    "ruAtt": ra, "ruYd": ry, "ruTD": rtd})
     WR.append((n, tm, a, b["rec"], b["reYd"], b["reTD"],
-               b["ruAtt"] or ra, b["ruYd"], b["ruTD"], av))
+               b["ruAtt"] or ra, b["ruYd"], b["ruTD"], capped_avail(n, av)))
 
 for n, tm, a, rc, red, retd, av in P.TE:
     b = _blend(n, {"rec": rc, "reYd": red, "reTD": retd})
-    TE.append((n, tm, a, b["rec"], b["reYd"], b["reTD"], av))
+    TE.append((n, tm, a, b["rec"], b["reYd"], b["reTD"], capped_avail(n, av)))
 
 K, DST = P.K, P.DST          # neither feed projects these usefully
 
@@ -113,6 +145,10 @@ def report():
           f" (espn {len(ESPN)}, sleeper {len(SLP)})")
     print(f"  interceptions projected for {len(INT)} QBs,"
           f" lost fumbles for {len(FUM)} players")
+    if _CAPPED:
+        print(f"  {len(_CAPPED)} availability caps applied from the live injury feed:")
+        for n, st, was, now in _CAPPED:
+            print(f"    {n:24} {st:9} avail {was} -> {now}  (set it deliberately in players.py)")
     if _SKIPPED:
         print(f"  {len(_SKIPPED)} source-lines skipped on role disagreement:")
         for n, t, why in _SKIPPED[:8]:
