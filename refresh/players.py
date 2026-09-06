@@ -92,10 +92,10 @@ RB = [
  ("Brian Robinson Jr.","ATL",135,107,462,4,9,58,0,1.00),
  ("Tyler Allgeier","ARI",112,98,391,3,18,124,0,1.00),
  ("Justice Hill","BAL",250,51,241,2,28,221,1,1.00),
- ("MarShawn Lloyd","GB",250,89,383,3,10,72,0,1.00),
+ ("MarShawn Lloyd","GB",250,158,666,5,22,158,1,1.00),  # lead back w/ Jacobs exempt, 5 Sep 2026
  ("Braelon Allen","NYJ",163,91,372,3,10,80,0,1.00),
  ("Samaje Perine","CIN",250,72,304,2,16,98,1,1.00),
- ("Keaton Mitchell","LAC",153,39,194,2,19,147,1,1.00),
+ ("Keaton Mitchell","LAC",153,83,402,3,19,142,1,1.00),  # role up, 5 Sep 2026
  ("Ray Davis","BUF",185,62,281,2,12,94,1,1.00),
  ("Tank Bigsby","PHI",160,87,375,3,5,31,0,1.00),
  ("Sean Tucker","TB",199,70,267,3,9,67,0,1.00),
